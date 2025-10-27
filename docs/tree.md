@@ -16,7 +16,7 @@
 ```text
 repo/
 ├─ specification/                 # 仕様エントリのルート (唯一の参照入口)
-│  ├─ apps/[<scope>/]<name>/      # 直下に flake.nix を持つ entrypath
+│  ├─ apps/<name>/                # 直下に flake.nix を持つ entrypath（apps は <name> に統一）
 │  ├─ contracts/<name>/           # 契約/プロトコル (実装禁止)
 │  ├─ infra/<name>/               # 実行・配置・運用境界
 │  ├─ interfaces/<name>/          # 外部公開IF
