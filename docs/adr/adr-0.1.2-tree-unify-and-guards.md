@@ -6,7 +6,7 @@
 
 ## 1. 決定
 1) **Tree統合**：`specification/` を本体ツリーに常設し、Entrypoints の独立章を廃止。
-2) **entrypath 規約（最小）**：`<layer>/[<scope>/]<name>` 直下に `flake.nix` を置く。
+2) **entrypath 規約（最小）**：**`<layer>/<name>`** 直下に `flake.nix` を置く。
 3) **partial ブランチ**：`partial/<entrypath('/'→'-')>` を標準。**同一 entrypath は並行1本**。
 4) **CI最小ガード（ci-guard）**：
    - `nix flake lock --check` / `nix flake check`
@@ -20,6 +20,7 @@
 - partial + 最小ガードで、**小さく安全に**進めつつ、`main` の安定と lead time を両立。
 
 ## 3. 影響
+- `docs/tree.md` の構成を `apps/<name>` に統一。
 - `docs/tree.md` の Entrypoints 章を統合観点に更新。
 - 追加でルールセット/CI雛形は 0.1.3 で詳細化予定。
 
