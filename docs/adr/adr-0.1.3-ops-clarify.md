@@ -30,6 +30,7 @@
 
 ### 2.4 必須チェック名（保護ブランチ）
 - Required checks: **`ci-guard`**（最低ガード: flake lock/check, path:禁止, entrypath実在）。
+- **一行併記（実装PR向け名称合わせ）**: `ci-guard = flake lock/check + entrypath検証 + path:禁止 + lock-only`。
 
 ### 2.5 entrypath表記の統一（append-only補足）
 - 標準: **`<layer>/<name>`**（apps は **`apps/<name>`** に統一）。
