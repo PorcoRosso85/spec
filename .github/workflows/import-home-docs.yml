@@ -1,0 +1,83 @@
+name: Import home/docs as 1file=1commit
+
+on:
+  workflow_dispatch:
+    inputs:
+      src_owner:
+        description: Source owner
+        default: PorcoRosso85
+      src_repo:
+        description: Source repository
+        default: home
+      src_ref:
+        description: Source ref (branch/tag/SHA)
+        default: main
+      src_path:
+        description: Path under source repo
+        default: docs
+      dst_branch:
+        description: Destination branch to push commits
+        default: docs/import-home-20251028
+      dst_prefix:
+        description: Destination prefix in this repo
+        default: docs
+      use_pat:
+        description: Use HOME_REPO_TOKEN secret (set true if source repo is private)
+        default: "false"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: import-home-docs-${{ inputs.dst_branch }}
+  cancel-in-progress: false
+
+jobs:
+  import:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout destination repo
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.dst_branch }}
+          fetch-depth: 0
+
+      - name: Clone source repo
+        env:
+          USE_PAT: ${{ inputs.use_pat }}
+        run: |
+          set -euo pipefail
+          if [ "$USE_PAT" = "true" ]; then
+            : "${{ secrets.HOME_REPO_TOKEN?Set HOME_REPO_TOKEN repo-scoped PAT in repository secrets}}"
+            git clone --depth=1 https://${{ secrets.HOME_REPO_TOKEN }}@github.com/${{ inputs.src_owner }}/${{ inputs.src_repo }}.git src
+          else
+            git clone --depth=1 https://github.com/${{ inputs.src_owner }}/${{ inputs.src_repo }}.git src
+          fi
+          cd src
+          git fetch origin "${{ inputs.src_ref }}" --depth=1
+          git checkout "${{ inputs.src_ref }}"
+          echo SRC_SHA=$(git rev-parse --short HEAD) >> $GITHUB_ENV
+
+      - name: Import files one-by-one
+        env:
+          DST_BRANCH: ${{ inputs.dst_branch }}
+          DST_PREFIX: ${{ inputs.dst_prefix }}
+          SRC_PATH: ${{ inputs.src_path }}
+          SRC_REPO:  ${{ inputs.src_repo }}
+          SRC_REF:   ${{ inputs.src_ref }}
+        run: |
+          set -euo pipefail
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          mkdir -p "$DST_PREFIX"
+          mapfile -t FILES < <(cd "src/${SRC_PATH}" && find . -type f -printf '%P\n' | sort)
+
+          for f in "${FILES[@]}"; do
+            mkdir -p "${DST_PREFIX}/$(dirname "$f")"
+            cp -a "src/${SRC_PATH}/${f}" "${DST_PREFIX}/${f}"
+            git add "${DST_PREFIX}/${f}"
+            git commit -m "docs: import ${SRC_REPO}/${SRC_PATH}/${f} @ ${SRC_REF} ($SRC_SHA)"
+          done
+
+          git push origin "HEAD:${DST_BRANCH}"
