@@ -42,21 +42,27 @@ jobs:
           ref: ${{ inputs.dst_branch }}
           fetch-depth: 0
 
+      - name: Validate PAT when use_pat=true
+        if: ${{ inputs.use_pat == 'true' }}
+        run: |
+          if [ -z "${{ secrets.HOME_REPO_TOKEN }}" ]; then
+            echo "::error::Missing HOME_REPO_TOKEN secret"; exit 1;
+          fi
+
       - name: Clone source repo
         env:
           USE_PAT: ${{ inputs.use_pat }}
         run: |
           set -euo pipefail
           if [ "$USE_PAT" = "true" ]; then
-            : "${{ secrets.HOME_REPO_TOKEN?Set HOME_REPO_TOKEN repo-scoped PAT in repository secrets}}"
-            git clone --depth=1 https://${{ secrets.HOME_REPO_TOKEN }}@github.com/${{ inputs.src_owner }}/${{ inputs.src_repo }}.git src
+            git clone --depth=1 https://${{ github.actor }}:${{ secrets.HOME_REPO_TOKEN }}@github.com/${{ inputs.src_owner }}/${{ inputs.src_repo }}.git src
           else
             git clone --depth=1 https://github.com/${{ inputs.src_owner }}/${{ inputs.src_repo }}.git src
           fi
           cd src
           git fetch origin "${{ inputs.src_ref }}" --depth=1
           git checkout "${{ inputs.src_ref }}"
-          echo SRC_SHA=$(git rev-parse --short HEAD) >> $GITHUB_ENV
+          echo "SRC_SHA=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
 
       - name: Import files one-by-one
         env:
