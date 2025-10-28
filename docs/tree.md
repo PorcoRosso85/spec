@@ -17,12 +17,12 @@
 
 ```text
 repo/
-├─ specification/                 # 仕様エントリのルート (唯一の参照入口)
-│  ├─ apps/<name>/                # 直下に flake.nix を持つ entrypath（apps は <name> に統一）
-│  ├─ contracts/<name>/           # 契約/プロトコル (実装禁止)
-│  ├─ infra/<name>/               # 実行・配置・運用境界
-│  ├─ interfaces/<name>/          # 外部公開IF
-│  └─ domains/<name>/             # ドメインロジックの境界
+├─ specification/                 # **Provider**: 提供側（配布用flake/契約の単一入口）
+│  ├─ apps/<name>/                # **Consumer**: アプリ実装（直下に flake.nix）
+│  ├─ contracts/<name>/           # **Provider**: 契約/プロトコル（実装コード不可）
+│  ├─ infra/<name>/               # **Consumer**: 実行・配置・運用境界
+│  ├─ interfaces/<name>/          # **Consumer**: 外部公開IF
+│  └─ domains/<name>/             # **Consumer**: ドメインロジック境界
 ├─ docs/
 │  ├─ adr/                        # ADR群 (0.1.xシリーズなど)
 │  │  ├─ adr-0.1.0-spec-impl-mirror-flake-tag.md
@@ -33,6 +33,8 @@ repo/
 │  └─ tree.md                     # このファイル (最新構成の単一真実)
 └─ README.md                      # リポ説明
 ```
+
+> 役割の見方: **Provider** は CUE/Nix の提供元。**Consumer** は Provider を **vendor（`cue.mod/pkg/<module>`）** または **OCI registry** で取り込む（詳細は ADR 0.1.4）。
 
 ---
 
