@@ -17,9 +17,7 @@ repo/
 │  │  └─ flake.nix
 │  ├─ interfaces/<name>/
 │  │  └─ flake.nix
-│  ├─ libs/<name>/
-│  │  └─ flake.nix
-│  └─ ops/<name>/
+│  └─ domains/<name>/             # ドメインロジックの境界
 │     └─ flake.nix
 ├─ docs/
 │  ├─ adr/                        # ADR群（詳細は各ADR本文へ）
