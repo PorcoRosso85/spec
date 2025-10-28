@@ -1,0 +1,111 @@
+name: Import home/docs as 1file=1commit
+
+on:
+  workflow_dispatch:
+    inputs:
+      src_owner:
+        description: Source owner
+        default: PorcoRosso85
+      src_repo:
+        description: Source repository
+        default: home
+      src_ref:
+        description: Source ref (branch/tag/SHA)
+        default: main
+      src_path:
+        description: Path under source repo
+        default: docs
+      dst_branch:
+        description: Destination branch to push commits
+        default: docs/import-home-20251028
+      dst_prefix:
+        description: Destination prefix in this repo
+        default: docs
+      use_pat:
+        description: Optional: force PAT requirement (set true if repo is private and you didn't configure secret auto-detection)
+        default: "false"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: import-home-docs-${{ inputs.dst_branch }}
+  cancel-in-progress: false
+
+jobs:
+  import:
+    runs-on: ubuntu-latest
+    env:
+      GIT_CURL_VERBOSE: 1
+    steps:
+      - name: Checkout destination repo
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.dst_branch }}
+          fetch-depth: 0
+          persist-credentials: true
+
+      - name: Resolve PAT (auto-detect secret)
+        id: pat
+        run: |
+          set -euo pipefail
+          TOKEN="${{ secrets.HOME_REPO_TOKEN }}"
+          if [ -n "$TOKEN" ]; then
+            echo "TOKEN=$TOKEN" >> $GITHUB_ENV
+            echo "found=true" >> $GITHUB_OUTPUT
+          else
+            echo "found=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Validate PAT when required
+        if: ${{ steps.pat.outputs.found == 'false' && inputs.use_pat == 'true' }}
+        run: |
+          echo "::error::Missing HOME_REPO_TOKEN secret (private repo requires PAT)"
+          exit 1
+
+      - name: Clone source repo (with or without PAT)
+        env:
+          TOKEN: ${{ env.TOKEN }}
+        run: |
+          set -euo pipefail
+          if [ -n "${TOKEN:-}" ]; then
+            echo "Using PAT to clone source repo"
+            git clone --depth=1 https://x-access-token:${TOKEN}@github.com/${{ inputs.src_owner }}/${{ inputs.src_repo }}.git src
+          else
+            echo "Cloning source repo over anonymous HTTPS"
+            git clone --depth=1 https://github.com/${{ inputs.src_owner }}/${{ inputs.src_repo }}.git src
+          fi
+          cd src
+          if ! git checkout "${{ inputs.src_ref }}"; then
+            git fetch --prune --tags --unshallow || git fetch --prune --tags --depth=50
+            git checkout "${{ inputs.src_ref }}"
+          fi
+          echo "SRC_SHA=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
+
+      - name: Import files one-by-one
+        env:
+          DST_BRANCH: ${{ inputs.dst_branch }}
+          DST_PREFIX: ${{ inputs.dst_prefix }}
+          SRC_PATH: ${{ inputs.src_path }}
+          SRC_REPO:  ${{ inputs.src_repo }}
+          SRC_REF:   ${{ inputs.src_ref }}
+        run: |
+          set -euo pipefail
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          if [ ! -d "src/${SRC_PATH}" ]; then
+            echo "::error::Source path not found: src/${SRC_PATH}"; ls -la src; exit 1;
+          fi
+
+          mkdir -p "$DST_PREFIX"
+          mapfile -t FILES < <(cd "src/${SRC_PATH}" && find . -type f -printf '%P\n' | sort)
+
+          for f in "${FILES[@]}"; do
+            mkdir -p "${DST_PREFIX}/$(dirname "$f")"
+            cp -a "src/${SRC_PATH}/${f}" "${DST_PREFIX}/${f}"
+            git add "${DST_PREFIX}/${f}"
+            git commit -m "docs: import ${SRC_REPO}/${SRC_PATH}/${f} @ ${SRC_REF} ($SRC_SHA)"
+          done
+
+          git push origin "HEAD:${DST_BRANCH}"
