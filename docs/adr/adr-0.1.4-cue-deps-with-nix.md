@@ -1,4 +1,4 @@
-# ADR 0.1.4: Nix × CUE 依存管理（**vendor一本化**）
+# ADR 0.1.4: Nix × CUE 依存管理（vendor 一本化）
 
 - **Status**: Proposed
 - **Date**: 2025-10-28 (JST)
@@ -33,3 +33,8 @@
 ## 6. ノート
 - 相対 import は不可。**モジュールパス厳守**。
 - `inputs.path:` は使用禁止（再現性確保）。
+
+## 7. 表記指針（役割の扱い）
+- **Provider/Consumer は文脈依存の相対概念**であり、
+  **`docs/tree.md` には役割ラベルを記載しない**。
+- 役割の説明・適用例は **本ADR** に集約し、tree は **構成のみ**を扱う。
