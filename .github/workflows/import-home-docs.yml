@@ -63,23 +63,30 @@ jobs:
           echo "::error::Missing HOME_REPO_TOKEN secret (private repo requires PAT)"
           exit 1
 
-      - name: Clone source repo (with or without PAT)
-        env:
-          TOKEN: ${{ env.TOKEN }}
+      - name: Checkout source repo with PAT (private)
+        if: ${{ steps.pat.outputs.found == 'true' }}
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ inputs.src_owner }}/${{ inputs.src_repo }}
+          ref: ${{ inputs.src_ref }}
+          token: ${{ secrets.HOME_REPO_TOKEN }}
+          path: src
+          fetch-depth: 1
+
+      - name: Clone source repo (public)
+        if: ${{ steps.pat.outputs.found == 'false' }}
         run: |
           set -euo pipefail
-          if [ -n "${TOKEN:-}" ]; then
-            echo "Using PAT to clone source repo"
-            git clone --depth=1 https://x-access-token:${TOKEN}@github.com/${{ inputs.src_owner }}/${{ inputs.src_repo }}.git src
-          else
-            echo "Cloning source repo over anonymous HTTPS"
-            git clone --depth=1 https://github.com/${{ inputs.src_owner }}/${{ inputs.src_repo }}.git src
-          fi
+          git clone --depth=1 https://github.com/${{ inputs.src_owner }}/${{ inputs.src_repo }}.git src
           cd src
           if ! git checkout "${{ inputs.src_ref }}"; then
             git fetch --prune --tags --unshallow || git fetch --prune --tags --depth=50
             git checkout "${{ inputs.src_ref }}"
           fi
+
+      - name: Capture SRC_SHA
+        run: |
+          cd src
           echo "SRC_SHA=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
 
       - name: Import files one-by-one
@@ -108,4 +115,14 @@ jobs:
             git commit -m "docs: import ${SRC_REPO}/${SRC_PATH}/${f} @ ${SRC_REF} ($SRC_SHA)"
           done
 
-          git push origin "HEAD:${DST_BRANCH}"
+      - name: Rebase onto remote branch to avoid non-FF
+        run: |
+          set -euo pipefail
+          git fetch origin "${{ inputs.dst_branch }}" || true
+          if git rev-parse --verify -q "origin/${{ inputs.dst_branch }}" >/dev/null; then
+            git rebase "origin/${{ inputs.dst_branch }}"
+          fi
+
+      - name: Push commits
+        run: |
+          git push origin "HEAD:${{ inputs.dst_branch }}"
