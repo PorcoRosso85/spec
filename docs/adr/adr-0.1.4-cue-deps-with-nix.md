@@ -1,60 +1,35 @@
-# ADR 0.1.4: Nix × CUE 依存管理（vendor / registry / bridge）
+# ADR 0.1.4: Nix × CUE 依存管理（**vendor一本化**）
 
 - **Status**: Proposed
 - **Date**: 2025-10-28 (JST)
-- **Relates**: ADR 0.1.0（参照入口/最低ガード）, ADR 0.1.1（CI基盤）, ADR 0.1.2（Tree/Guard）, ADR 0.1.3（運用明確化）
+- **Relates**: ADR 0.1.0 / 0.1.1 / 0.1.2 / 0.1.3
 
 ## 1. コンテキスト
-- `flake` の `inputs` は **取得と環境固定まで**。
-- **CUE の import 解決は CUE の責務**（`cue.mod/pkg/<module>` への vendor か、OCI レジストリ経由）。
-- 誤解を避け、両者の責務分離を**規約として明文化**する。
+- `flake` の `inputs` は **取得と環境固定**まで。
+- CUE の import 解決は **CUE の責務**。
+- 以前は *vendor* と *registry* の両案を併記していた。
 
-## 2. 決定（サマリ）
-1) **依存側の選択肢を3通りに固定**:
-   - **A: vendor-symlink（開発）** — devShell で symlink を自動作成。
-   - **B: vendor-copy（CI/配布）** — `nix run .#vendor` でコピー固定。
-   - **C: registry（再利用）** — GHCR 等の OCI レジストリで `cue mod publish/get/tidy`。
-2) **提供側の出力規約**:
-   - `packages.<sys>.cueModule` — CUE モジュールツリーを `$out` に展開。
-   - `apps.vendor` — 依存側の `cue.mod/pkg/<module>` に symlink/copy を作る補助。
-   - `templates.consumer` — 最小雛形（shellHook で symlink）。
-   - `devShells.default` — `cue`（必要なら `go`）のバージョン pin。
-3) **禁止/必須**:
-   - **相対 import 禁止**（CUE）／**モジュールパス厳守**。
-   - `inputs.path:` の使用禁止（再現性確保）。
+## 2. 決定（一本化方針）
+- **採用**: **Vendor ブリッジ**
+  - 開発: **symlink** で `cue.mod/pkg/<module>` に自動リンク（`nix develop` の `shellHook` で実行）。
+  - 配布/CI: **copy 固定**（`nix run .#vendor` を実行し、`cue.mod/pkg` に実ファイルを配置）。
+- **非採用**: **Registry 方式**（将来の再検討は可）。
+  - 理由: 「**flake input + import だけ**」の体験に最も近いのは **vendor 自動化**であり、評価系（CUE）と取得系（Nix）の橋渡しが単純になるため。
 
 ## 3. 影響
-- **再現性と導入容易性が向上**（Nixで取得を固定、CUEで依存を固定）。
-- 依存側が常に**明示の vendor or registry** を踏むため、解決経路が透明。
+- 開発者は **`flake.nix` に provider を追加**して **CUE で import を書く**だけ。
+- 再現性: flake.lock で provider のリビジョンを固定。CI は copy で安定。
 
-## 4. 代替案と理由
-- 依存側で `PYTHONPATH` 的な一時対処を行う案は**却下**（CUEでは無関係・再現性低下）。
-- flake だけで自動 import させる案は**不可**（設計上の責務外）。
+## 4. 実装ガイド（要点のみ）
+- **Provider（配布側）**
+  - `packages.<sys>.cueModule`（CUEモジュール純ツリー）、`apps.vendor`（vendor コマンド）、`devShells.default`（cue を pin）。
+- **Consumer（依存側）**
+  - `shellHook` で `cue.mod/pkg/<module>` に symlink を作成。
+  - CI は `nix run .#vendor && cue fmt -n && cue vet -c && cue eval -c`。
 
-## 5. 参考: ツリー例
-### 提供側（provider）
-```text
-provider/
-├─ flake.nix              # packages.cueModule / apps.vendor / templates.consumer / devShells
-└─ cue/                   # CUE module（例: example.com/libs/mathx）
-```
+## 5. 代替案（却下）
+- **Registry（OCI/GHCR）**: 共有性は高いが、**flake input との自然連携が薄く**、CUE 側の操作（`cue mod tidy/get`）が必須になるため本方針では不採用。
 
-### 依存側（consumer）
-```text
-consumer/
-├─ flake.nix              # inputs.provider.url = "github:org/provider"（alias/pin 推奨）
-├─ cue.mod/
-│  ├─ module.cue          # 例: "example.com/app"
-│  └─ pkg/
-│     └─ example.com/libs/
-│        └─ mathx -> /nix/store/...-cueModule   # symlink or copy
-└─ main.cue               # import "example.com/libs/mathx"
-```
-
-## 6. マイグレーション
-- 既存プロジェクトは、開発中は **A: symlink**、リリース/CI は **B: copy** へ誘導。
-- 組織内共有が増えたら **C: registry**（GHCR 推奨）へ移行。
-
-## 7. 追記（運用）
-- CI の最低チェックは ADR 0.1.2/0.1.3 に委譲。
-- 本ADRは**構成計画に影響しない**（tree.md は構成のみを保持）。
+## 6. ノート
+- 相対 import は不可。**モジュールパス厳守**。
+- `inputs.path:` は使用禁止（再現性確保）。
