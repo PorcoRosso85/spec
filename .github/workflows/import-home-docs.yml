@@ -4,25 +4,25 @@ on:
   workflow_dispatch:
     inputs:
       src_owner:
-        description: Source owner
+        description: "Source owner"
         default: PorcoRosso85
       src_repo:
-        description: Source repository
+        description: "Source repository"
         default: home
       src_ref:
-        description: Source ref (branch/tag/SHA)
+        description: "Source ref (branch/tag/SHA)"
         default: main
       src_path:
-        description: Path under source repo
+        description: "Path under source repo"
         default: docs
       dst_branch:
-        description: Destination branch to push commits
+        description: "Destination branch to push commits"
         default: docs/import-home-20251028
       dst_prefix:
-        description: Destination prefix in this repo
+        description: "Destination prefix in this repo"
         default: docs
       use_pat:
-        description: Optional: force PAT requirement (set true if repo is private and you didn't configure secret auto-detection)
+        description: "Optional: force PAT requirement (set true if repo is private and you didn't configure secret auto-detection)"
         default: "false"
 
 permissions:
