@@ -34,7 +34,7 @@ repo/
 └─ README.md                      # リポ説明
 ```
 
-> 役割の見方: **Provider** は CUE/Nix の提供元。**Consumer** は Provider を **vendor（`cue.mod/pkg/<module>`）** または **OCI registry** で取り込む（詳細は ADR 0.1.4）。
+> **本リポの基本方針（ADR 0.1.4）**: Consumer は Provider の CUE を **vendor（`cue.mod/pkg/<module>`）**で取り込む。**registry は採用しない**。
 
 ---
 
@@ -45,7 +45,7 @@ repo/
 ---
 
 ## 更新履歴
-- 2025-10-28: ADR 0.1.4 追加 (Nix×CUE 依存管理を定義)。
+- 2025-10-28: ADR 0.1.4 更新（vendor 一本化）。
 - 2025-10-27: ADR 0.1.2 追加 (Tree統合、partialブランチ、最小ガード/自動統合の方針)。
 - 2025-10-27: ADR 0.1.1 追加 (CI実行基盤をBlacksmith標準化し、最低ガードをBlacksmith上で必須化)。
 - 2025-10-27: ADR 0.1.0 追加 (spec/impl mirror, Flakes参照, 日付タグ導入)。
