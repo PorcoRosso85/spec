@@ -17,12 +17,12 @@
 
 ```text
 repo/
-├─ specification/                 # **Provider**: 提供側（配布用flake/契約の単一入口）
-│  ├─ apps/<name>/                # **Consumer**: アプリ実装（直下に flake.nix）
-│  ├─ contracts/<name>/           # **Provider**: 契約/プロトコル（実装コード不可）
-│  ├─ infra/<name>/               # **Consumer**: 実行・配置・運用境界
-│  ├─ interfaces/<name>/          # **Consumer**: 外部公開IF
-│  └─ domains/<name>/             # **Consumer**: ドメインロジック境界
+├─ specification/                 # 仕様エントリのルート (唯一の参照入口)
+│  ├─ apps/<name>/                # 直下に flake.nix を持つ entrypath（apps は <name> に統一）
+│  ├─ contracts/<name>/           # 契約/プロトコル (実装禁止)
+│  ├─ infra/<name>/               # 実行・配置・運用境界
+│  ├─ interfaces/<name>/          # 外部公開IF
+│  └─ domains/<name>/             # ドメインロジックの境界
 ├─ docs/
 │  ├─ adr/                        # ADR群 (0.1.xシリーズなど)
 │  │  ├─ adr-0.1.0-spec-impl-mirror-flake-tag.md
@@ -34,7 +34,7 @@ repo/
 └─ README.md                      # リポ説明
 ```
 
-> **本リポの基本方針（ADR 0.1.4）**: Consumer は Provider の CUE を **vendor（`cue.mod/pkg/<module>`）**で取り込む。**registry は採用しない**。
+> **注**: 役割（Provider/Consumer）は文脈依存。固定注記は tree に書かない。詳細は ADR 0.1.4 を参照。
 
 ---
 
@@ -45,7 +45,7 @@ repo/
 ---
 
 ## 更新履歴
-- 2025-10-28: ADR 0.1.4 更新（vendor 一本化）。
+- 2025-10-28: ADR 0.1.4 更新（vendor 一本化、役割注記は tree から排除）。
 - 2025-10-27: ADR 0.1.2 追加 (Tree統合、partialブランチ、最小ガード/自動統合の方針)。
 - 2025-10-27: ADR 0.1.1 追加 (CI実行基盤をBlacksmith標準化し、最低ガードをBlacksmith上で必須化)。
 - 2025-10-27: ADR 0.1.0 追加 (spec/impl mirror, Flakes参照, 日付タグ導入)。
