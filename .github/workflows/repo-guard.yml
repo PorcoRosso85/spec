@@ -24,7 +24,6 @@ jobs:
   catalog-validate:
     name: Catalog Validation
     runs-on: ubuntu-latest
-    continue-on-error: true  # Phase-0+1: Observation mode
     steps:
       - uses: actions/checkout@v4
         with:
@@ -86,7 +85,6 @@ jobs:
   adr-validate:
     name: ADR Validation
     runs-on: ubuntu-latest
-    continue-on-error: true  # Phase-0+1: Observation mode
     steps:
       - uses: actions/checkout@v4
 
@@ -151,7 +149,6 @@ jobs:
   skeleton-guard:
     name: Skeleton Guard
     runs-on: ubuntu-latest
-    continue-on-error: true  # Phase-0+1: Observation mode
     steps:
       - uses: actions/checkout@v4
         with:
@@ -175,7 +172,6 @@ jobs:
   traceability-gen:
     name: Traceability Generation
     runs-on: ubuntu-latest
-    continue-on-error: true  # Phase-0+1: Observation mode
     steps:
       - uses: actions/checkout@v4
 
@@ -249,9 +245,12 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "---" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Phase-0+1**: All jobs are in observation mode (continue-on-error: true)" >> $GITHUB_STEP_SUMMARY
+          echo "**Phase-3**: Enforcement mode active" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "To enforce these checks:" >> $GITHUB_STEP_SUMMARY
-          echo "1. Verify all jobs pass consistently" >> $GITHUB_STEP_SUMMARY
-          echo "2. Remove 'continue-on-error: true' from each job" >> $GITHUB_STEP_SUMMARY
-          echo "3. Enable branch protection with required checks" >> $GITHUB_STEP_SUMMARY
+          echo "All checks are now **required** to pass:" >> $GITHUB_STEP_SUMMARY
+          echo "- Unauthorized paths will **block** the PR" >> $GITHUB_STEP_SUMMARY
+          echo "- Invalid catalog/ADR changes will **fail** CI" >> $GITHUB_STEP_SUMMARY
+          echo "- Manual edits to .gen/ files will **fail** CI" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Next: Configure branch protection to make these checks required" >> $GITHUB_STEP_SUMMARY
+          echo "See: docs/ops/branch-protection.md" >> $GITHUB_STEP_SUMMARY
