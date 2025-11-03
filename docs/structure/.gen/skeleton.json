@@ -1,4 +1,0 @@
-{
-  "//": "slot.id -> 配置パス。このファイルは人間がメンテする。ここに無い新パスを増やすPRはCIで拒否する。",
-  "EXAMPLE:nist80053.AC-access-control": "apps/authz/"
-}
