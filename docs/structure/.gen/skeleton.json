@@ -1,0 +1,15 @@
+{
+  "_meta": {
+    "version": "0.1.0",
+    "description": "Repository structure skeleton - authorized placement map",
+    "lastUpdated": "2025-11-03T00:00:00Z",
+    "excludeFromGuard": [
+      "docs/",
+      ".github/",
+      "scripts/",
+      "README.md",
+      "LICENSE"
+    ]
+  },
+  "custom.repo-structure-guard": ".github/workflows/repo-guard.yml"
+}

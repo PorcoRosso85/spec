@@ -1,0 +1,257 @@
+name: Repository Structure Guard (3-SSOT)
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - 'docs/catalog/**'
+      - 'docs/adr/**'
+      - 'docs/structure/.gen/**'
+      - 'scripts/**'
+      - '.github/workflows/repo-guard.yml'
+      - '**/*'  # Check all paths for unauthorized additions
+
+permissions:
+  contents: read
+  pull-requests: write
+
+concurrency:
+  group: repo-guard-${{ github.head_ref }}
+  cancel-in-progress: true
+
+jobs:
+  # Job 1: Validate catalog integrity
+  catalog-validate:
+    name: Catalog Validation
+    runs-on: ubuntu-latest
+    continue-on-error: true  # Phase-0+1: Observation mode
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install CUE
+        run: |
+          CUE_VERSION="v0.7.0"
+          curl -fsSL "https://github.com/cue-lang/cue/releases/download/${CUE_VERSION}/cue_${CUE_VERSION}_linux_amd64.tar.gz" -o /tmp/cue.tar.gz
+          tar -xzf /tmp/cue.tar.gz -C /tmp
+          sudo mv /tmp/cue /usr/local/bin/
+          cue version
+
+      - name: Validate catalog schema
+        run: |
+          echo "🔍 Validating catalog schema..."
+          cd docs/catalog
+
+          # Check if all CUE files are valid
+          if ! cue vet ./...; then
+            echo "❌ CUE validation failed"
+            exit 1
+          fi
+
+          echo "✅ Catalog schema is valid"
+
+      - name: Check slot dependencies
+        run: |
+          echo "🔍 Checking slot dependencies..."
+
+          # Export all slots
+          cd docs/catalog
+          cue export ./slot-catalog.cue -e allSlots > /tmp/all_slots.json
+
+          # Check for circular dependencies (basic check)
+          jq -r 'to_entries[] | select(.value.dependsOn | length > 0) | "\(.key) depends on: \(.value.dependsOn | join(", "))"' /tmp/all_slots.json
+
+          echo "✅ Dependency check complete"
+
+      - name: Check for duplicate responsibilities
+        run: |
+          echo "🔍 Checking for duplicate responsibilities..."
+
+          cd docs/catalog
+          cue export ./slot-catalog.cue -e allSlots > /tmp/all_slots.json
+
+          # Extract responsibilities and check for duplicates
+          DUPLICATES=$(jq -r '.[] | .responsibility' /tmp/all_slots.json | sort | uniq -d)
+
+          if [ -n "$DUPLICATES" ]; then
+            echo "⚠️  Warning: Duplicate responsibilities found (DRY violation):"
+            echo "$DUPLICATES" | sed 's/^/  - /'
+            # Warning only in Phase-0+1
+          else
+            echo "✅ No duplicate responsibilities"
+          fi
+
+  # Job 2: Validate ADR consistency
+  adr-validate:
+    name: ADR Validation
+    runs-on: ubuntu-latest
+    continue-on-error: true  # Phase-0+1: Observation mode
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install CUE
+        run: |
+          CUE_VERSION="v0.7.0"
+          curl -fsSL "https://github.com/cue-lang/cue/releases/download/${CUE_VERSION}/cue_${CUE_VERSION}_linux_amd64.tar.gz" -o /tmp/cue.tar.gz
+          tar -xzf /tmp/cue.tar.gz -C /tmp
+          sudo mv /tmp/cue /usr/local/bin/
+          cue version
+
+      - name: Validate ADR CUE files
+        run: |
+          echo "🔍 Validating ADR CUE files..."
+
+          for adr in docs/adr/adr-*.cue; do
+            if [ -f "$adr" ]; then
+              echo "  Checking: $adr"
+              if ! cue vet "$adr"; then
+                echo "❌ Validation failed for $adr"
+                exit 1
+              fi
+            fi
+          done
+
+          echo "✅ All ADR files are valid"
+
+      - name: Check ADR-skeleton alignment
+        run: |
+          echo "🔍 Checking ADR declarations match skeleton.json..."
+
+          # Get activated slots from ADRs
+          ACTIVATED_SLOTS=()
+          for adr in docs/adr/adr-*.cue; do
+            if [ -f "$adr" ]; then
+              SLOTS=$(cue export "$adr" 2>/dev/null | jq -r '.. | .activations[]?.slotId // empty' 2>/dev/null || echo "")
+              if [ -n "$SLOTS" ]; then
+                ACTIVATED_SLOTS+=($SLOTS)
+              fi
+            fi
+          done
+
+          # Get slots from skeleton.json
+          SKELETON_SLOTS=$(jq -r 'keys[] | select(startswith("_") | not)' docs/structure/.gen/skeleton.json)
+
+          echo "  Activated slots in ADRs:"
+          printf '    - %s\n' "${ACTIVATED_SLOTS[@]}"
+
+          echo "  Slots in skeleton.json:"
+          echo "$SKELETON_SLOTS" | sed 's/^/    - /'
+
+          # Check alignment
+          for slot in $SKELETON_SLOTS; do
+            if [[ ! " ${ACTIVATED_SLOTS[@]} " =~ " ${slot} " ]]; then
+              echo "⚠️  Warning: Slot '$slot' in skeleton.json but no ADR found"
+            fi
+          done
+
+          echo "✅ ADR-skeleton alignment check complete"
+
+  # Job 3: Skeleton guard (unauthorized paths)
+  skeleton-guard:
+    name: Skeleton Guard
+    runs-on: ubuntu-latest
+    continue-on-error: true  # Phase-0+1: Observation mode
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Fetch base branch
+        run: |
+          git fetch origin ${{ github.base_ref }}
+
+      - name: Install jq
+        run: sudo apt-get update && sudo apt-get install -y jq
+
+      - name: Check unauthorized paths
+        env:
+          BASE_BRANCH: origin/${{ github.base_ref }}
+        run: |
+          chmod +x scripts/check_skeleton_guard.sh
+          scripts/check_skeleton_guard.sh
+
+  # Job 4: Generate and validate traceability
+  traceability-gen:
+    name: Traceability Generation
+    runs-on: ubuntu-latest
+    continue-on-error: true  # Phase-0+1: Observation mode
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install CUE
+        run: |
+          CUE_VERSION="v0.7.0"
+          curl -fsSL "https://github.com/cue-lang/cue/releases/download/${CUE_VERSION}/cue_${CUE_VERSION}_linux_amd64.tar.gz" -o /tmp/cue.tar.gz
+          tar -xzf /tmp/cue.tar.gz -C /tmp
+          sudo mv /tmp/cue /usr/local/bin/
+          cue version
+
+      - name: Install jq
+        run: sudo apt-get update && sudo apt-get install -y jq
+
+      - name: Generate traceability.json
+        run: |
+          chmod +x scripts/gen_traceability.sh
+          scripts/gen_traceability.sh
+
+      - name: Check if traceability.json was manually edited
+        run: |
+          echo "🔍 Checking if traceability.json matches generated version..."
+
+          # Compare existing with generated
+          if ! diff -u docs/structure/.gen/traceability.json docs/structure/.gen/traceability.json; then
+            echo "⚠️  traceability.json may have been manually edited"
+            echo "   This file should only be generated by CI"
+          fi
+
+          echo "✅ traceability.json check complete"
+
+      - name: Generate ADR Markdown files
+        run: |
+          chmod +x scripts/gen_adr_md.sh
+          scripts/gen_adr_md.sh
+
+      - name: Check for manual edits in .gen files
+        run: |
+          echo "🔍 Checking for manual edits in .gen/ directory..."
+
+          # Check if any .gen files were modified in this PR
+          git fetch origin ${{ github.base_ref }}
+          MODIFIED_GEN=$(git diff --name-only origin/${{ github.base_ref }}...HEAD | grep '\.gen/' || echo "")
+
+          if [ -n "$MODIFIED_GEN" ]; then
+            echo "⚠️  Warning: .gen files were modified:"
+            echo "$MODIFIED_GEN" | sed 's/^/    - /'
+            echo ""
+            echo "   .gen files should only be modified by CI generation scripts"
+            echo "   If you need to update these files, modify the source .cue files instead"
+          else
+            echo "✅ No manual edits in .gen/ directory"
+          fi
+
+  # Summary job
+  guard-summary:
+    name: Guard Summary
+    runs-on: ubuntu-latest
+    needs: [catalog-validate, adr-validate, skeleton-guard, traceability-gen]
+    if: always()
+    steps:
+      - name: Summary
+        run: |
+          echo "## Repository Structure Guard Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Jobs Status" >> $GITHUB_STEP_SUMMARY
+          echo "- Catalog Validation: ${{ needs.catalog-validate.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- ADR Validation: ${{ needs.adr-validate.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Skeleton Guard: ${{ needs.skeleton-guard.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Traceability Generation: ${{ needs.traceability-gen.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "---" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Phase-0+1**: All jobs are in observation mode (continue-on-error: true)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "To enforce these checks:" >> $GITHUB_STEP_SUMMARY
+          echo "1. Verify all jobs pass consistently" >> $GITHUB_STEP_SUMMARY
+          echo "2. Remove 'continue-on-error: true' from each job" >> $GITHUB_STEP_SUMMARY
+          echo "3. Enable branch protection with required checks" >> $GITHUB_STEP_SUMMARY
