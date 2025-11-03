@@ -1,8 +1,6 @@
 // Package catalog defines validation rules for the slot catalog
 package catalog
 
-import "list"
-
 // #ValidationRules defines CI checks for slot catalog integrity
 #ValidationRules: {
 	// Rule 1: Active slots must have an owner
@@ -24,22 +22,6 @@ import "list"
 	// Verified by regex pattern in schema.cue
 }
 
-// Helper functions for validation (used by CI scripts)
-#ValidateDependencies: {
-	allSlots: {...}
-	slot: #Slot
-
-	// Check that all dependencies exist
-	validDeps: [
-		for dep in slot.dependsOn {
-			if allSlots[dep] != _|_ {
-				true
-			}
-			if allSlots[dep] == _|_ {
-				false
-			}
-		}
-	]
-
-	valid: list.And(validDeps)
-}
+// Note: #ValidateDependencies helper function removed
+// Dependency validation is performed by CI scripts using jq
+// to avoid CUE standard library compatibility issues
