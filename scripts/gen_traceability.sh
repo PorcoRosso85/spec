@@ -7,7 +7,9 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 SKELETON="$REPO_ROOT/docs/structure/.gen/skeleton.json"
-TRACEABILITY="$REPO_ROOT/docs/structure/.gen/traceability.json"
+
+# Allow custom output path (default: docs/structure/.gen/traceability.json)
+TRACEABILITY="${1:-$REPO_ROOT/docs/structure/.gen/traceability.json}"
 
 echo "🔨 Generating traceability.json..."
 
