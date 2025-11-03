@@ -72,6 +72,33 @@ if [ -n "$DUPLICATE_SLOTS" ]; then
     exit 1
 fi
 
+# Validate: Check for empty/null placements
+echo "  Validating placement values..."
+
+EMPTY_PLACEMENTS=$(echo "$ALL_ACTIVATIONS" | jq -r 'to_entries[] | select(.value.placement == null or .value.placement == "" or (.value.placement | type) != "string") | .key')
+
+if [ -n "$EMPTY_PLACEMENTS" ]; then
+    echo "❌ Error: Empty or invalid placement values found:"
+    echo "$ALL_ACTIVATIONS" | jq -r 'to_entries[] | select(.value.placement == null or .value.placement == "" or (.value.placement | type) != "string") | "    - Activation[\(.key)]: slotId=\(.value.slotId), placement=\(.value.placement)"'
+    echo ""
+    echo "  Each activation must have a non-empty string placement value."
+    exit 1
+fi
+
+# Validate: Check for invalid path formats
+echo "  Checking placement path formats..."
+
+INVALID_PATHS=$(echo "$ALL_ACTIVATIONS" | jq -r '.[] | select(.placement | test("^[./a-zA-Z0-9_-]+(/[a-zA-Z0-9_-]*)*(/|\\.[a-z0-9]+)?$") | not) | .slotId + ": " + .placement')
+
+if [ -n "$INVALID_PATHS" ]; then
+    echo "❌ Error: Invalid placement path format:"
+    echo "$INVALID_PATHS" | sed 's/^/    - /'
+    echo ""
+    echo "  Placement paths must match: ^[./a-zA-Z0-9_-]+(/[a-zA-Z0-9_-]*)*(/|\\.[a-z0-9]+)?$"
+    echo "  Examples: 'src/auth/', '.github/workflows/ci.yml', 'README.md'"
+    exit 1
+fi
+
 # Validate: Check for conflicting placements (different slots → same path)
 echo "  Checking for placement conflicts..."
 
@@ -95,7 +122,6 @@ else
     CURRENT_META='{
         "version": "0.1.0",
         "description": "Repository structure skeleton - authorized placement map",
-        "lastUpdated": "'$(date -u +"%Y-%m-%dT%H:%M:%SZ")'",
         "excludeFromGuard": [
             "docs/",
             ".github/",
@@ -106,12 +132,12 @@ else
     }'
 fi
 
-# Build skeleton.json structure
+# Build skeleton.json structure (deterministic output - no timestamp)
 jq -n \
   --argjson meta "$CURRENT_META" \
   --argjson activations "$ALL_ACTIVATIONS" \
   '{
-    _meta: ($meta | .lastUpdated = (now | strftime("%Y-%m-%dT%H:%M:%SZ"))),
+    _meta: $meta,
   } + (
     $activations | map({
       key: .slotId,
@@ -143,6 +169,13 @@ if [ -f "$CURRENT_SKELETON" ]; then
 
     if [ "$GENERATED_SLOTS" = "$CURRENT_SLOTS" ]; then
         echo "✅ No changes detected - skeleton.json is up to date"
+
+        # Output to GitHub Step Summary if in CI
+        if [ -n "${GITHUB_STEP_SUMMARY:-}" ]; then
+            echo "### Skeleton Generation: ✅ Up to Date" >> "$GITHUB_STEP_SUMMARY"
+            echo "" >> "$GITHUB_STEP_SUMMARY"
+            echo "skeleton.json matches ADR activations (no changes needed)" >> "$GITHUB_STEP_SUMMARY"
+        fi
     else
         echo "⚠️  Changes detected:"
         echo ""
@@ -186,6 +219,44 @@ if [ -f "$CURRENT_SKELETON" ]; then
         echo "  To apply changes:"
         echo "    cp $OUTPUT $CURRENT_SKELETON"
         echo "    git add $CURRENT_SKELETON"
+
+        # Output to GitHub Step Summary if in CI
+        if [ -n "${GITHUB_STEP_SUMMARY:-}" ]; then
+            echo "### Skeleton Generation: ⚠️ Out of Sync" >> "$GITHUB_STEP_SUMMARY"
+            echo "" >> "$GITHUB_STEP_SUMMARY"
+            echo "skeleton.json differs from ADR activations:" >> "$GITHUB_STEP_SUMMARY"
+            echo "" >> "$GITHUB_STEP_SUMMARY"
+
+            if [ -n "$ADDED" ]; then
+                echo "**➕ Added slots:**" >> "$GITHUB_STEP_SUMMARY"
+                echo '```' >> "$GITHUB_STEP_SUMMARY"
+                echo "$ADDED" >> "$GITHUB_STEP_SUMMARY"
+                echo '```' >> "$GITHUB_STEP_SUMMARY"
+                echo "" >> "$GITHUB_STEP_SUMMARY"
+            fi
+
+            if [ -n "$REMOVED" ]; then
+                echo "**➖ Removed slots:**" >> "$GITHUB_STEP_SUMMARY"
+                echo '```' >> "$GITHUB_STEP_SUMMARY"
+                echo "$REMOVED" >> "$GITHUB_STEP_SUMMARY"
+                echo '```' >> "$GITHUB_STEP_SUMMARY"
+                echo "" >> "$GITHUB_STEP_SUMMARY"
+            fi
+
+            if [ -n "$MODIFIED" ]; then
+                echo "**🔄 Modified placements:**" >> "$GITHUB_STEP_SUMMARY"
+                echo '```' >> "$GITHUB_STEP_SUMMARY"
+                echo "$MODIFIED" >> "$GITHUB_STEP_SUMMARY"
+                echo '```' >> "$GITHUB_STEP_SUMMARY"
+                echo "" >> "$GITHUB_STEP_SUMMARY"
+            fi
+
+            echo "**To apply changes:**" >> "$GITHUB_STEP_SUMMARY"
+            echo '```bash' >> "$GITHUB_STEP_SUMMARY"
+            echo "cp docs/structure/.gen/skeleton.generated.json docs/structure/.gen/skeleton.json" >> "$GITHUB_STEP_SUMMARY"
+            echo "git add docs/structure/.gen/skeleton.json" >> "$GITHUB_STEP_SUMMARY"
+            echo '```' >> "$GITHUB_STEP_SUMMARY"
+        fi
     fi
 else
     echo ""

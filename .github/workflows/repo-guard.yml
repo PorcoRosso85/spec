@@ -306,12 +306,13 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "---" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Phase-3**: Enforcement mode active (except skeleton-gen, traceability-gen)" >> $GITHUB_STEP_SUMMARY
+          echo "**Phase-0+1**: Observation mode for all checks" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "Strict validation:" >> $GITHUB_STEP_SUMMARY
-          echo "- ✅ Unauthorized paths are **blocked**" >> $GITHUB_STEP_SUMMARY
-          echo "- ✅ Invalid catalog/ADR changes **fail** CI" >> $GITHUB_STEP_SUMMARY
-          echo "- ⚠️  skeleton-gen: **warns** if out of sync (not enforced yet)" >> $GITHUB_STEP_SUMMARY
-          echo "- ⚠️  traceability-gen: **observation** mode" >> $GITHUB_STEP_SUMMARY
+          echo "All jobs run in observation mode (\`continue-on-error: true\`):" >> $GITHUB_STEP_SUMMARY
+          echo "- ⚠️  catalog-validate: **warns** on schema violations" >> $GITHUB_STEP_SUMMARY
+          echo "- ⚠️  adr-validate: **warns** on invalid ADR files" >> $GITHUB_STEP_SUMMARY
+          echo "- ⚠️  skeleton-guard: **warns** on unauthorized paths" >> $GITHUB_STEP_SUMMARY
+          echo "- ⚠️  skeleton-gen: **warns** if out of sync" >> $GITHUB_STEP_SUMMARY
+          echo "- ⚠️  traceability-gen: **warns** on manual edits" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "Next: docs/ops/branch-protection.md" >> $GITHUB_STEP_SUMMARY
