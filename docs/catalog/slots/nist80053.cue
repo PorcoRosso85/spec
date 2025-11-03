@@ -1,7 +1,7 @@
 // Package slots defines NIST SP 800-53 security control slots
 package slots
 
-import "github.com/PorcoRosso85/spec/docs/catalog/schema"
+import "../schema"
 
 // NIST 800-53 Access Control family
 slots: {

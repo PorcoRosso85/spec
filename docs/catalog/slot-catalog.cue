@@ -3,7 +3,7 @@
 package catalog
 
 import (
-	"github.com/PorcoRosso85/spec/docs/catalog/slots"
+	"./slots"
 )
 
 // All available slots in the system

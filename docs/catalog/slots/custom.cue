@@ -1,7 +1,7 @@
 // Package slots defines custom internal responsibility slots
 package slots
 
-import "github.com/PorcoRosso85/spec/docs/catalog/schema"
+import "../schema"
 
 // Custom responsibilities specific to this project
 slots: {
