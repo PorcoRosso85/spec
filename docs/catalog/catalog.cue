@@ -2,13 +2,9 @@
 // This is the single source of truth (SSOT) for all responsibility slots
 package catalog
 
-import (
-	"./slots"
-)
-
-// All available slots in the system
+// All available slots in the system (reference to slots defined in slots.cue)
 // This map is the authoritative source for slot definitions
-allSlots: slots.slots
+allSlots: slots
 
 // Metadata
 _meta: {

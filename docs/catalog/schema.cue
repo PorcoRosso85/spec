@@ -1,5 +1,5 @@
-// Package schema defines the core slot type for responsibility allocation
-package schema
+// Package catalog defines the core slot type for responsibility allocation
+package catalog
 
 // #Slot represents a single responsibility unit in the system
 // Each slot has a unique ID, clear responsibility, and ownership

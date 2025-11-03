@@ -1,12 +1,12 @@
-// Package schema defines validation rules for the slot catalog
-package schema
+// Package catalog defines validation rules for the slot catalog
+package catalog
 
 import "list"
 
 // #ValidationRules defines CI checks for slot catalog integrity
 #ValidationRules: {
 	// Rule 1: Active slots must have an owner
-	// Verified at slot level in slot.cue
+	// Verified at slot level in schema.cue
 
 	// Rule 2: Abstract slots must not appear in skeleton.json
 	// Verified by CI script (check_skeleton_guard.sh)
@@ -21,7 +21,7 @@ import "list"
 	// Warning only in Phase-0+1, enforced in Phase-3
 
 	// Rule 6: Slot IDs must follow naming conventions
-	// Verified by regex pattern in slot.cue
+	// Verified by regex pattern in schema.cue
 }
 
 // Helper functions for validation (used by CI scripts)

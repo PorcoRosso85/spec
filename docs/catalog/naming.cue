@@ -1,5 +1,5 @@
-// Package schema defines naming conventions for slot IDs
-package schema
+// Package catalog defines naming conventions for slot IDs
+package catalog
 
 // #NamingRules defines the stable ID format for slots
 // Format: <source>.<duty[.sub...]>
