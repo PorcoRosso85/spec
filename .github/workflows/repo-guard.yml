@@ -57,7 +57,7 @@ jobs:
 
           # Export all slots
           cd docs/catalog
-          cue export ./slot-catalog.cue -e allSlots > /tmp/all_slots.json
+          cue export . -e allSlots > /tmp/all_slots.json
 
           # Check for circular dependencies (basic check)
           jq -r 'to_entries[] | select(.value.dependsOn | length > 0) | "\(.key) depends on: \(.value.dependsOn | join(", "))"' /tmp/all_slots.json
@@ -69,7 +69,7 @@ jobs:
           echo "🔍 Checking for duplicate responsibilities..."
 
           cd docs/catalog
-          cue export ./slot-catalog.cue -e allSlots > /tmp/all_slots.json
+          cue export . -e allSlots > /tmp/all_slots.json
 
           # Extract responsibilities and check for duplicates
           DUPLICATES=$(jq -r '.[] | .responsibility' /tmp/all_slots.json | sort | uniq -d)

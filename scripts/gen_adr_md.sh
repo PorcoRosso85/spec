@@ -33,8 +33,8 @@ for adr_cue in "$ADR_DIR"/adr-*.cue; do
 
     echo "  Processing: $basename"
 
-    # Export CUE to JSON
-    json=$(cue export "$adr_cue" 2>/dev/null || echo "{}")
+    # Export CUE to JSON (from ADR directory to resolve any relative imports)
+    json=$(cd "$(dirname "$adr_cue")" && cue export "$(basename "$adr_cue")" 2>/dev/null || echo "{}")
 
     if [ "$json" = "{}" ]; then
         echo "    ⚠️  Warning: Empty or invalid CUE file"

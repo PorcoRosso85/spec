@@ -28,7 +28,7 @@ cd "$REPO_ROOT"
 
 # Export all slots from catalog
 echo "  Exporting catalog slots..."
-cue export ./docs/catalog/slot-catalog.cue -e allSlots > /tmp/slots.json 2>/dev/null || {
+cue export ./docs/catalog -e allSlots > /tmp/slots.json 2>/dev/null || {
     echo "❌ Error: Failed to export catalog"
     exit 1
 }
