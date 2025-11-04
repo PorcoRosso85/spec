@@ -57,7 +57,13 @@ jq -n \
         owner: (.value.owner // null),
         responsibility: .value.responsibility,
         tier: .value.tier,
-        placement: ($skel[.key] // null),
+        placement: (
+          $skel[.key] as $val |
+          if ($val | type) == "object"
+          then $val.placement
+          else $val
+          end
+        ),
         dependsOn: .value.dependsOn,
         standardRef: .value.standardRef
       })

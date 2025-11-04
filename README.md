@@ -107,6 +107,32 @@ Update `docs/structure/.gen/skeleton.json` directly:
 
 ---
 
+## Boundary & Scope
+
+This repository strictly enforces a boundary between design/contract and implementation:
+
+### In Scope (This Repository)
+- **Catalog** (`docs/catalog/**`) - Responsibility slot definitions
+- **ADR** (`docs/adr/**`) - Architecture decision records
+- **Skeleton** (`docs/structure/.gen/skeleton.json`) - Authorized placement map
+- **Specification** (`specification/**/flake.nix`) - Contract attributes only
+- **External Reference Validation** - Non-build checks for external flake health
+
+### Out of Scope (External Repositories)
+- **Implementation directories**: `apps/`, `infra/`, `domain/`
+- **Build, test, and distribution** of actual code
+- **Runtime operations**
+
+> CI enforces this boundary via **skeleton-guard**, which detects out-of-scope changes and suggests migration to external repositories.
+
+### External References
+Starting from skeleton version 0.2.0, this repository supports **external flake references**:
+- Implementation code lives in external repositories
+- This repo validates reference health (resolvability, pinned revisions, contract attributes)
+- No builds or tests run in this repository
+
+---
+
 ## CI Validation
 
 Every PR is checked by 5 jobs:
