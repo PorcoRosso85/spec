@@ -18,7 +18,12 @@ adr0002: {
     "CIの5ジョブ(repo-guard等)が起動することを確認",
     "既存ファイルを一切変更しない"
   ]
-  activations: []
+  activations: [{
+    slotId:    "docs.adr",
+    owner:     "PorcoRosso85",
+    placement: "docs/adr/",
+    rationale: "CUE→skeleton同期のCI検証"
+  }]
   references: [
     "docs/adr/adr-0001.cue"
   ]
