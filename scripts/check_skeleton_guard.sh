@@ -19,18 +19,8 @@ fi
 # Get base branch (default: origin/main)
 BASE_BRANCH="${BASE_BRANCH:-origin/main}"
 
-# Get authorized paths from skeleton.json (supports both string and object values)
-AUTHORIZED_PATHS=$(jq -r '
-  to_entries
-  | map(select(.key | startswith("_") | not))
-  | map(
-      if (.value | type) == "object"
-      then .value.placement // ""
-      else .value
-      end
-    )
-  | .[]
-' "$SKELETON" 2>/dev/null || echo "")
+# Get authorized paths from skeleton.json
+AUTHORIZED_PATHS=$(jq -r 'to_entries | map(select(.key | startswith("_") | not)) | .[].value' "$SKELETON" 2>/dev/null || echo "")
 
 # Get excluded paths
 EXCLUDED_PATHS=$(jq -r '._meta.excludeFromGuard[]? // empty' "$SKELETON" 2>/dev/null || echo "")

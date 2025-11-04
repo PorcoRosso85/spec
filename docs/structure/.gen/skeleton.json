@@ -1,20 +1,8 @@
 {
   "_meta": {
-    "version": "0.2.0",
+    "version": "0.1.0",
     "description": "Repository structure skeleton - authorized placement map",
     "lastUpdated": "2025-11-03T00:00:00Z",
-    "schema": {
-      "note": "Values can be string (local path) or object (external reference)",
-      "stringFormat": "path/to/dir/",
-      "objectFormat": {
-        "kind": "external",
-        "flake": "github:org/repo?dir=path",
-        "rev": "git-sha-hash",
-        "revPinned": true,
-        "attrPath": "contracts.slot-id",
-        "placement": "apps/feature/"
-      }
-    },
     "excludeFromGuard": [
       "docs/",
       ".github/",
