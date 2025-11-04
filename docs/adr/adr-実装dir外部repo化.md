@@ -1,6 +1,6 @@
 # ADR: 実装ディレクトリの外部リポジトリ化と境界の明示
 
-- Status: Accepted
+- Status: Proposed
 - Deciders: Owner
 - Date: 2025-11-03
 - Related: repo-guard, catalog/ADR/skeleton, structure-実装dir外部repo化
