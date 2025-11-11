@@ -1,0 +1,21 @@
+{
+  "schema_version": "1",
+  "narHash": "sha256-1a2b3c4d5e6f7g8h9i0jklmnopqrstuvwxyz",
+  "generated_at": "2025-11-10T12:34:56Z",
+  "generator": "adr-repository",
+  "source_uri": "github:PorcoRosso85/adr",
+  "slots": [
+    {
+      "slotId": "custom.new-feature",
+      "owner": "PorcoRosso85",
+      "placement": "src/new-feature/",
+      "status": "provisional",
+      "rationale": "Provisional state should not be in treeFinal",
+      "manifest": {
+        "narHash": "sha256-abc123",
+        "created_at": "2025-11-10",
+        "adr_ref": "adr-0099"
+      }
+    }
+  ]
+}

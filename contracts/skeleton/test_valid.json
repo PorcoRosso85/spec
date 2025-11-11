@@ -1,0 +1,33 @@
+{
+  "schema_version": "1",
+  "narHash": "sha256-1a2b3c4d5e6f7g8h9i0jklmnopqrstuvwxyz",
+  "generated_at": "2025-11-10T12:34:56Z",
+  "generator": "adr-repository",
+  "source_uri": "github:PorcoRosso85/adr",
+  "slots": [
+    {
+      "slotId": "custom.repo-structure-guard",
+      "owner": "PorcoRosso85",
+      "placement": ".github/workflows/repo-guard.yml",
+      "status": "active",
+      "rationale": "CI enforcement is the appropriate layer for structural validation",
+      "manifest": {
+        "narHash": "sha256-abc123def456ghi789jklmnopqrstuvwxyz",
+        "created_at": "2025-11-03T00:00:00Z",
+        "adr_ref": "adr-0001"
+      }
+    },
+    {
+      "slotId": "custom.contract-guard",
+      "owner": "PorcoRosso85",
+      "placement": ".github/workflows/spec-guard.yml",
+      "status": "active",
+      "rationale": "Validate treeFinal.json contracts",
+      "manifest": {
+        "narHash": "sha256-xyz987wvu654tsr321ponmlkjihgfedcba",
+        "created_at": "2025-11-10T00:00:00Z",
+        "adr_ref": "adr-0042"
+      }
+    }
+  ]
+}

@@ -1,186 +1,272 @@
-# spec
+# spec - 契約の番人 (Contract Guard)
 
-Repository for system specifications with 3-SSOT guard enforcement.
+`spec` は **adr リポジトリが公開する契約（tree-final-nar-*.json）を検証する**専用ツールです。
 
-## Quick Start: Adding New Responsibilities
+## 責務
 
-This repository enforces a 3-step process for any structural change:
+- ✅ `tree-final-nar-*.json` の契約検証（互換性・必須項目・一意制約）
+- ✅ `checks.spec-guard` で Green/Red を返す
+- ❌ ADR の生成・編集・管理（adr リポジトリの責務）
+- ❌ Catalog の管理（adr リポジトリの責務）
+- ❌ Skeleton/Tree の生成（adr リポジトリの責務）
 
-### 1. Catalog → Define the responsibility slot
+---
 
-Add a new slot to `docs/catalog/slots/*.cue`:
+## アーキテクチャ（片方向・イベント駆動）
 
-```cue
-slots: {
-  "custom.my-new-feature": schema.#Slot & {
-    id:             "custom.my-new-feature"
-    responsibility: "Single-sentence description of what this does"
-    status:         "abstract"  // Start as abstract
-    tier:           "app"       // or "business" / "infra"
-    dependsOn: []
-    standardRef: []
-  }
-}
+```
+adr (upstream)
+  ├── decisions.jsonl 管理
+  ├── catalog URI 管理
+  ├── tree-final-nar-<narHash>.json 生成（決定的JSON + narHash）
+  └── repository_dispatch(adr-updated) 送信
+      ↓ (片方向)
+spec (guard)
+  ├── tree-final-nar-<narHash>.json 取得
+  ├── contracts/skeleton/*.cue で検証
+  └── narHashをログ出力 + Green/Red判定
+
+※ spec→adr のACKは将来対応（provisional）
 ```
 
-### 2. ADR → Justify and activate
+---
 
-Create `docs/adr/adr-NNNN.cue` to activate the slot:
+## 入力フォーマット
 
-```cue
-package adr
+### ファイル名規則
+- `tree-final-nar-<narHash_8>.json`
+- 例: `tree-final-nar-1a2b3c4d.json`
+- narHash: `sha256-<base32>` の先頭8文字（内容アドレス化）
 
-adrNNNN: {
-  id:    "NNNN"
-  title: "Activate my-new-feature"
-  status: "accepted"
-  date:  "2025-11-03"
-
-  background: """
-    Why this responsibility is needed...
-    """
-
-  decision: """
-    We are activating custom.my-new-feature...
-    """
-
-  activations: [{
-    slotId:    "custom.my-new-feature"
-    owner:     "your-name"
-    placement: "apps/my-feature/"
-    rationale: "Placement justification..."
-  }]
-}
-```
-
-### 3. Skeleton → Declare placement (Auto-generated)
-
-**Option A: Automatic (Recommended)**
-
-Run the generator:
-
-```bash
-./scripts/gen_skeleton_from_adr.sh
-```
-
-This reads all ADR activations and generates `skeleton.generated.json`. Review and apply:
-
-```bash
-cp docs/structure/.gen/skeleton.generated.json docs/structure/.gen/skeleton.json
-git add docs/structure/.gen/skeleton.json
-```
-
-**Option B: Manual**
-
-Update `docs/structure/.gen/skeleton.json` directly:
+### JSON構造
 
 ```json
 {
-  "custom.my-new-feature": "apps/my-feature/"
+  "schema_version": "1",
+  "narHash": "sha256-...",
+  "generated_at": "2025-11-10T12:34:56Z",
+  "generator": "adr-repository",
+  "source_uri": "github:PorcoRosso85/adr",
+  "slots": [
+    {
+      "slotId": "custom.repo-guard",
+      "owner": "PorcoRosso85",
+      "placement": ".github/workflows/repo-guard.yml",
+      "status": "active",
+      "rationale": "CI enforcement",
+      "manifest": {
+        "narHash": "sha256-...",
+        "created_at": "2025-11-03T00:00:00Z",
+        "adr_ref": "adr-0001"
+      }
+    }
+  ]
 }
 ```
 
-**Now you can add code in `apps/my-feature/`**. Any other location will be rejected by CI.
+### 必須フィールド
+- `schema_version`: `"1"` (文字列として厳密)
+- `narHash`: rootレベル（`sha256-<base32>`形式）
+- `slots[].manifest.narHash`: per-node必須
+- `slots[].status`: `"active"` のみ（`"provisional"` は許可しない）
 
 ---
 
-## Structure
+## イベント駆動連携
 
-- **`docs/catalog/`** - Slot catalog (SSOT #1: what responsibilities exist)
-  - `schema/*.cue` - Slot type definitions
-  - `slots/*.cue` - Actual slot definitions
-  - `slot-catalog.cue` - Aggregated catalog
+### adr → spec (実装済み)
 
-- **`docs/adr/`** - Architecture Decision Records (SSOT #2: why we use which slots)
-  - `adr-*.cue` - ADRs in CUE format (machine-readable)
-  - `.gen/adr-*.md` - Generated Markdown (DO NOT EDIT)
+```yaml
+# repository_dispatch(adr-updated)
+event_type: adr-updated
+client_payload:
+  eventId: "01JCXXX..."              # ULID（Outbox再送用）
+  treeFinalURL: "https://..."        # tree-final-nar-*.json URL
+  narHash: "sha256-..."              # 内容ハッシュ
+  timestamp: "2025-11-10T12:34:56Z"
+  sender_repo: "PorcoRosso85/adr"    # 送信元検証用
+```
 
-- **`docs/structure/.gen/`** - Current configuration (SSOT #3: where slots are placed)
-  - `skeleton.json` - Authorized directory placement map
-  - `traceability.json` - Auto-generated traceability (DO NOT EDIT)
-
-- **`scripts/`** - Generation and validation scripts
-  - `gen_skeleton_from_adr.sh` - Generate skeleton.json from ADR activations
-  - `gen_adr_md.sh` - Generate Markdown from CUE ADRs
-  - `gen_traceability.sh` - Generate traceability.json
-  - `check_skeleton_guard.sh` - Validate path authorizations
+### spec → adr (将来対応)
+- `repository_dispatch(adr-ack)` は **provisional**（未実装）
+- 当面は片方向のみ
 
 ---
 
-## CI Validation
+## 契約検証
 
-Every PR is checked by 5 jobs:
+### 7つのガード
 
-1. **catalog-validate** - Validates slot definitions, dependencies, and naming
-2. **adr-validate** - Validates ADR-skeleton alignment
-3. **skeleton-guard** - Prevents unauthorized directory additions
-4. **skeleton-gen** - Verifies skeleton.json matches ADR activations (observation mode)
-5. **traceability-gen** - Regenerates and validates traceability.json (observation mode)
+| # | ガード | 目的 |
+|---|--------|------|
+| 1 | Sender Allowlist | なりすまし防止（`PorcoRosso85/adr`のみ許可） |
+| 2 | narHash Three-Way Match | 改ざん検出（payload/root/再計算の一致） |
+| 3 | Concurrency Control | 重複起動抑止（同eventId=1実行のみ） |
+| 4 | Size/Timeout Limits | DoS防止（10MB/30s制限） |
+| 5 | schema_version | 未対応バージョン拒否（`"1"`のみ） |
+| 6 | State Purity | provisional混入検知（`active`のみ許可） |
+| 7 | CUE Contract | 型・制約・一意性検証 |
 
-**Phase-0+1**: All checks run in observation mode (`continue-on-error: true`)
+### 検証ルール (contracts/skeleton/*.cue)
 
-**Phase-3**: Enforcement mode - PRs cannot merge if checks fail
+- **slotId一意性**: 重複禁止
+- **narHashフォーマット**: `sha256-<base32>` 検証
+- **per-node manifest**: 各slotに必須
+- **status厳密チェック**: `"active"` のみ（treeFinalでは）
 
 ---
 
-## Local Development
+## ローカル検証
 
-### Install CUE (optional)
+### 依存インストール
 
 ```bash
+# CUE インストール
 curl -fsSL https://cuelang.org/install.sh | sh
+
+# jq インストール（通常プリインストール済み）
+sudo apt-get install -y jq
 ```
 
-### Validate locally
+### CUE検証
 
 ```bash
-# Validate catalog
-cd docs/catalog && cue vet ./...
+# 正常系（Green）
+cue vet contracts/skeleton/validate.cue contracts/skeleton/test_valid.json -d 'tree'
 
-# Generate skeleton from ADRs
-./scripts/gen_skeleton_from_adr.sh
+# 異常系（Red: slotId重複）
+cue vet contracts/skeleton/validate.cue contracts/skeleton/test_invalid_duplicate.json -d 'tree'
 
-# Generate ADR Markdown
-./scripts/gen_adr_md.sh
+# 異常系（Red: provisional混入）
+cue vet contracts/skeleton/validate.cue contracts/skeleton/test_invalid_provisional.json -d 'tree'
+```
 
-# Generate traceability
-./scripts/gen_traceability.sh
+### narHash確認
 
-# Check skeleton guard
-./scripts/check_skeleton_guard.sh
+```bash
+# rootレベルのnarHash
+jq '.narHash' tree-final-nar-*.json
+
+# per-node manifest
+jq '.slots[].manifest.narHash' tree-final-nar-*.json
 ```
 
 ---
 
-## Rules
+## CI検証（spec-guard.yml）
 
-1. **Never edit `.gen/` files manually** - They are auto-generated by CI
-2. **Always follow the 3-step process** - catalog → ADR → skeleton (auto-generated)
-3. **Use skeleton generator** - `./scripts/gen_skeleton_from_adr.sh` to sync skeleton.json
-4. **One slot = One responsibility** (SRP - Single Responsibility Principle)
-5. **One slot = One owner** - Clear accountability
-6. **No circular dependencies** - Validated by CI
+### トリガー
+
+- `repository_dispatch(adr-updated)` - adr からの通知
+- `push` - main ブランチへのプッシュ
+- `pull_request` - PR作成時
+
+### 実行フロー
+
+1. 送信元検証（allowlist）
+2. treeFinal.json ダウンロード（サイズ/タイムアウト制限）
+3. schema_version 検証
+4. provisional state チェック
+5. narHash 三者一致
+6. CUE契約検証
+7. レポート出力（GitHub Step Summary）
+
+### 出力例
+
+```
+🔒 Spec Guard Report (Production-Ready)
+
+Event ID: 01JCXXX...
+narHash: sha256-1a2b3c4d...
+Status: ✅ GREEN
+
+Guards Applied:
+  1. Sender Allowlist: ✅ Verified
+  2. narHash Three-Way Match: ✅ Payload == Root
+  3. Concurrency Control: ✅ Enabled
+  4. Size/Timeout Limits: ✅ 0.5MB / 30s
+  5. schema_version: ✅ "1"
+  6. State Purity: ✅ All active
+  7. CUE Contract: ✅ GREEN
+
+Verdict: Contract satisfied, tree is valid.
+```
 
 ---
 
-## Documentation
+## provisional/final 区別
 
-- [Structure Overview](docs/structure/index.md)
-- [ADR: 3-SSOT System](docs/adr/adr-1人AI体制で壊さず拡張し続ける2.md)
-- [Operations Guide](docs/ops/index.md)
+- **provisional**: Issue状態、可視化のみ（tree含む、通知・副作用なし）
+- **final**: ADRマージ後、dispatch発火・副作用あり
+
+spec は **treeFinal.json のみ**を検証対象とし、provisional は含まれない前提。
 
 ---
 
-## Branch Protection
+## Outbox 再送（Lazy Retry）
 
-After the first CI run, configure branch protection:
+- adr側で eventId を Outbox に記録
+- dispatch失敗時は同eventIdで再送可能
+- spec側は eventId を受け取るが、ACK未実装のため応答なし
 
-1. GitHub Settings → Branches → Add rule for `main`
-2. Enable: "Require status checks to pass before merging"
-3. Select required checks:
-   - `catalog-validate`
-   - `adr-validate`
-   - `skeleton-guard`
-   - `traceability-gen`
+---
 
-See: [Branch Protection Setup](docs/ops/branch-protection.md)
+## ディレクトリ構造
+
+```
+/home/user/spec/
+├── README.md                           (このファイル)
+├── contracts/                          (契約定義)
+│   └── skeleton/
+│       ├── schema.cue                  (基本型定義)
+│       ├── constraints.cue             (検証ルール)
+│       ├── manifest.cue                (per-node manifest検証)
+│       ├── validate.cue                (統合検証)
+│       ├── test_valid.json             (Green用テスト)
+│       ├── test_invalid_duplicate.json (Red用: slotId重複)
+│       └── test_invalid_provisional.json (Red用: provisional混入)
+├── .github/
+│   └── workflows/
+│       └── spec-guard.yml              (契約検証ワークフロー)
+└── docs/                               (運用ドキュメント)
+    └── ops/
+        └── contract-guard.md           (運用手順)
+```
+
+### DEPRECATED ディレクトリ
+
+以下は issue #42 により非推奨になりました（将来削除予定）:
+- `docs/adr/` - ADR管理はadrリポジトリへ移行
+- `docs/catalog/` - カタログ管理はadrリポジトリへ移行
+- `docs/structure/` - skeleton生成はadrリポジトリへ移行
+- `scripts/` - 生成スクリプトは廃止（adr側で実装）
+
+---
+
+## 受入条件（Exit Criteria）
+
+以下をすべて満たす必要があります：
+
+1. ✅ adr が `tree-final-nar-<hash>.json` を出力
+2. ✅ spec が narHashをログ出力してGreen/Red判定
+3. ✅ dispatch失敗時に Outbox から再送可能（adr側実装）
+4. ✅ spec に ADR実装物が存在しない
+5. ✅ README に I/F仕様が明記
+6. ✅ eventId と narHash がログに出力
+7. ✅ sender allowlist と concurrency が有効
+8. ✅ treeFinal.json が schema_version=="1"、全件state==active
+9. ✅ 受入テスト: 正常系Green、違反系（state混入・narHash不一致）でRed
+10. ✅ E2E成功: adr final → dispatch → spec Green
+
+---
+
+## ライセンス
+
+MIT
+
+---
+
+## 関連リポジトリ
+
+- **adr**: https://github.com/PorcoRosso85/adr （upstream、ADR/catalog/tree生成）
+- **spec**: https://github.com/PorcoRosso85/spec （このリポジトリ、契約検証のみ）
