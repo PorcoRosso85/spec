@@ -1,0 +1,28 @@
+name: skeleton-preview
+on:
+  pull_request:
+    paths:
+      - 'docs/adr/**'
+      - 'scripts/gen_skeleton_from_adr.sh'
+      - 'docs/structure/.gen/**'
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Generate skeleton from ADR
+        run: |
+          bash scripts/gen_skeleton_from_adr.sh || echo '::warning::generator not found, skipping'
+          if [ -f docs/structure/.gen/skeleton.json ]; then
+            echo 'generated'
+          else
+            echo '::warning::skeleton.json not found'
+          fi
+      - name: Upload skeleton artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: skeleton-from-adr
+          path: docs/structure/.gen/skeleton.json
+          if-no-files-found: warn
+          overwrite: true
