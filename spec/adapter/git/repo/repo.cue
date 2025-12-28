@@ -1,6 +1,6 @@
 package repo
 
-import "github.porcorosso85/spec-repo/spec/schema"
+import "github.com/porcorosso85/spec-repo/spec/schema"
 
 // 機能URN ↔ Git repo の1:1マッピング
 // - 1urn1feature1repo 原則を保証

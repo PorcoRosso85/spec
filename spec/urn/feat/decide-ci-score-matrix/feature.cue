@@ -1,6 +1,6 @@
 package feat
 
-import "github.porcorosso85/spec-repo/spec/schema"
+import "github.com/porcorosso85/spec-repo/spec/schema"
 
 // decide-ci-score-matrix: CI スコアマトリックス判定機能
 // - urn:feat:decide-ci-score-matrix

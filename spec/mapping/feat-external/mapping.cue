@@ -1,6 +1,6 @@
 package mapping
 
-import "github.porcorosso85/spec-repo/spec/schema"
+import "github.com/porcorosso85/spec-repo/spec/schema"
 
 // 内部機能URN ↔ 外部標準URN のマッピング
 // - 内部URNと外部標準を完全分離し、ここだけで橋渡し
