@@ -1,6 +1,6 @@
 package rules
 
-import "spec/schema"
+import "github.porcorosso85/spec-repo/spec/schema"
 
 // session.title の文法・逆引きロジックの契約定義
 // - CUEだけで動的パースはしない（契約として定義）

@@ -1,6 +1,6 @@
 package env
 
-import "spec/schema"
+import "github.porcorosso85/spec-repo/spec/schema"
 
 // stg: ステージング環境
 // - urn:env:stg

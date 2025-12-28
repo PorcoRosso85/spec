@@ -1,6 +1,6 @@
 package std
 
-import "spec/schema"
+import "github.porcorosso85/spec-repo/spec/schema"
 
 // 外部標準URNカタログ
 // - 現時点では空の配列として初期化

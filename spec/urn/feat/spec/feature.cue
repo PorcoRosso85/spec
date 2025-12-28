@@ -1,6 +1,6 @@
 package feat
 
-import "spec/schema"
+import "github.porcorosso85/spec-repo/spec/schema"
 
 // spec: 仕様・URN・マッピング・CIルールの SSOT リポジトリ
 // - urn:feat:spec

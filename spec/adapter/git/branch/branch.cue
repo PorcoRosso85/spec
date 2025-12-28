@@ -1,6 +1,6 @@
 package branch
 
-import "spec/schema"
+import "github.porcorosso85/spec-repo/spec/schema"
 
 // 機能URN ↔ branch 名規則のマッピング
 // - branch 名の文法: slug または slug + "+" + variant

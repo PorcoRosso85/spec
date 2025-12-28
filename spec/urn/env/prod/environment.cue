@@ -1,6 +1,6 @@
 package env
 
-import "spec/schema"
+import "github.porcorosso85/spec-repo/spec/schema"
 
 // prod: 本番環境
 // - urn:env:prod
