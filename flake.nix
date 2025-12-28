@@ -17,14 +17,24 @@
           buildInputs = with pkgs; [
             cue
             git
+            bash
           ];
 
           shellHook = ''
+            export PATH="$PWD/scripts:$PATH"
+            
             echo "🚀 Spec repo development environment"
             echo ""
-            echo "Available commands:"
+            echo "Phase 0 (Smoke):"
+            echo "  bash scripts/check.sh smoke  - cue fmt --check + cue vet + nix flake check"
+            echo ""
+            echo "Phase 1 (Reference Integrity):"
+            echo "  bash scripts/check.sh fast   - fmt --check + vet + spec-lint dedup (PR)"
+            echo "  bash scripts/check.sh slow   - fast + spec-lint refs/circular (main)"
+            echo ""
+            echo "Utilities:"
             echo "  cue eval ./spec/...           - Evaluate all spec definitions"
-            echo "  cue vet ./spec/ci/checks/...  - Validate CI checks"
+            echo "  cue vet ./spec/...            - Type validation"
             echo ""
             echo "Spec structure:"
             echo "  - schema/: Type definitions"
