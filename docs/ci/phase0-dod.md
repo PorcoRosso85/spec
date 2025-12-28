@@ -18,13 +18,15 @@ Verified by: Full suite of automated checks
 
 ### 2. Import Path Integrity
 - **Status**: ✅ PASS
-- **Expected Pattern**: `import "github.com/porcorosso85/spec-repo/spec/schema"`
+- **Expected Pattern**: `import "github.com/porcorosso85/spec-repo/spec/schema"` (without @v0)
+- **Rationale**: CUE spec - module declares @v0, import statements omit major version (auto-inferred from module.cue)
 - **Current Count**: 10/10 files (all unified)
 - **Old Patterns Verified as Removed**:
   - `import "spec/schema"` ✅ 0 occurrences
   - `import "spec.repo/..."` ✅ 0 occurrences
-  - `import "github.porcorosso85/..."` (without @v0) ✅ 0 occurrences
+  - `import "github.porcorosso85/..."` (different FQDN) ✅ 0 occurrences
 - **Verification**: `grep -R 'github\.com/porcorosso85/spec-repo/spec/schema' spec --include='*.cue' | wc -l`
+- **Note**: Import major version is deliberately omitted per CUE standard practice (module.cue @v0 is authoritative)
 
 ### 3. Format Check (cue fmt --check)
 - **Status**: ✅ PASS
