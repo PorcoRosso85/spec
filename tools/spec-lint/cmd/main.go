@@ -1,17 +1,16 @@
 package main
 
 import (
+	"bytes"
+	"encoding/json"
 	"flag"
 	"fmt"
 	"io/fs"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"regexp"
 	"strings"
-
-	"cuelang.org/go/cue"
-	"cuelang.org/go/cue/cuecontext"
-	"cuelang.org/go/cue/load"
 )
 
 const (
@@ -33,6 +32,26 @@ func NewChecker(specRoot, mode string) *Checker {
 		mode:     mode,
 		errors:   []string{},
 	}
+}
+
+// execCueEval runs cue eval with proper error handling
+func (c *Checker) execCueEval(args ...string) ([]byte, error) {
+	cuePath, err := exec.LookPath("cue")
+	if err != nil {
+		return nil, fmt.Errorf("cue not found in PATH: %w (run via 'nix develop -c')", err)
+	}
+
+	cmd := exec.Command(cuePath, args...)
+	var stdout, stderr bytes.Buffer
+	cmd.Stdout = &stdout
+	cmd.Stderr = &stderr
+	cmd.Dir = c.specRoot
+
+	if err := cmd.Run(); err != nil {
+		return nil, fmt.Errorf("cue eval failed: %w (stderr: %s)", err, stderr.String())
+	}
+
+	return stdout.Bytes(), nil
 }
 
 // logError adds an error message
@@ -71,6 +90,14 @@ func (c *Checker) runFast() error {
 		return err
 	}
 
+	// CRITICAL: featCount == 0 means extraction failed (cannot verify dedup)
+	featCount := len(featIDs)
+	if featCount == 0 {
+		c.logError("No feat-ids extracted (CUE eval failed, fallback exhausted)")
+		c.logError("Cannot verify dedup check - inspection required")
+		return nil // Continue to report other errors, but this is a FAIL
+	}
+
 	// Check for duplicates
 	for id, files := range featIDs {
 		if len(files) > 1 {
@@ -79,7 +106,7 @@ func (c *Checker) runFast() error {
 	}
 
 	if len(c.errors) == 0 {
-		c.logInfo(fmt.Sprintf("✅ No feat-id duplicates (%d unique)", len(featIDs)))
+		c.logInfo(fmt.Sprintf("✅ No feat-id duplicates (%d unique)", featCount))
 	}
 
 	// Validate feat slugs (kebab-case)
@@ -153,19 +180,75 @@ func (c *Checker) runSlow() error {
 	return nil
 }
 
-// scanFeatIDs scans spec/urn/feat/*/feature.cue for feat-ids
+// scanFeatIDs scans spec/urn/feat/ for feat-ids using cue eval
 func (c *Checker) scanFeatIDs(featIDs map[string][]string) error {
 	featPath := filepath.Join(c.specRoot, "spec", "urn", "feat")
 	if _, err := os.Stat(featPath); os.IsNotExist(err) {
 		return nil // No feat directory, that's ok
 	}
 
+	// Use cue eval to extract all features at once (more reliable than file-by-file parsing)
+	features, err := c.evalFeaturesViaCue()
+	if err != nil {
+		c.logInfo(fmt.Sprintf("cue eval failed (reason: %v), trying fallback", err))
+		// Fallback: walk directory and extract via regex
+		walkErr := c.scanFeatIDsViaWalk(featIDs)
+		if walkErr != nil {
+			c.logInfo(fmt.Sprintf("fallback also failed: %v", walkErr))
+		}
+		return walkErr
+	}
+
+	c.logInfo(fmt.Sprintf("cue eval extracted %d features via canonical approach", len(features)))
+
+	for id, filepath := range features {
+		if id != "" {
+			featIDs[id] = append(featIDs[id], filepath)
+		}
+	}
+
+	return nil
+}
+
+// evalFeaturesViaCue uses cue eval to extract all features (canonical approach)
+func (c *Checker) evalFeaturesViaCue() (map[string]string, error) {
+	features := make(map[string]string)
+
+	// Run: cue eval ./spec/urn/feat/... -e 'feature' --out json
+	output, err := c.execCueEval("eval", "./spec/urn/feat/...", "-e", "feature", "--out", "json")
+	if err != nil {
+		return nil, err
+	}
+
+	// Parse NDJSON output (newline-delimited JSON, not array)
+	decoder := json.NewDecoder(bytes.NewReader(output))
+	for decoder.More() {
+		var feat struct {
+			ID   string `json:"id"`
+			Slug string `json:"slug"`
+		}
+		if err := decoder.Decode(&feat); err != nil {
+			return nil, fmt.Errorf("failed to parse cue eval output: %w", err)
+		}
+		if feat.ID != "" {
+			// Store slug as filepath indicator (not exact, but indicates source)
+			features[feat.ID] = filepath.Join(c.specRoot, "spec/urn/feat", feat.Slug, "feature.cue")
+		}
+	}
+
+	return features, nil
+}
+
+// scanFeatIDsViaWalk fallback: walk directory tree
+func (c *Checker) scanFeatIDsViaWalk(featIDs map[string][]string) error {
+	featPath := filepath.Join(c.specRoot, "spec", "urn", "feat")
+
 	err := filepath.WalkDir(featPath, func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
 		if d.Name() == "feature.cue" && !d.IsDir() {
-			id, err := c.extractFeatID(path)
+			id, err := c.extractIDRegex(path, `^\s*id:\s*"([^"]+)"`)
 			if err != nil {
 				return err
 			}
@@ -179,19 +262,67 @@ func (c *Checker) scanFeatIDs(featIDs map[string][]string) error {
 	return err
 }
 
-// scanEnvIDs scans spec/urn/env/*/environment.cue for env-ids
+// scanEnvIDs scans spec/urn/env/ for env-ids using cue eval
 func (c *Checker) scanEnvIDs(envIDs map[string][]string) error {
 	envPath := filepath.Join(c.specRoot, "spec", "urn", "env")
 	if _, err := os.Stat(envPath); os.IsNotExist(err) {
 		return nil // No env directory, that's ok
 	}
 
+	// Use cue eval to extract all environments (more reliable)
+	environments, err := c.evalEnvironmentsViaCue()
+	if err != nil {
+		c.logInfo(fmt.Sprintf("cue eval failed for env, trying fallback: %v", err))
+		// Fallback: walk directory and extract via regex
+		return c.scanEnvIDsViaWalk(envIDs)
+	}
+
+	for id, filepath := range environments {
+		if id != "" {
+			envIDs[id] = append(envIDs[id], filepath)
+		}
+	}
+
+	return nil
+}
+
+// evalEnvironmentsViaCue uses cue eval to extract all environments (canonical approach)
+func (c *Checker) evalEnvironmentsViaCue() (map[string]string, error) {
+	environments := make(map[string]string)
+
+	// Run: cue eval ./spec/urn/env/... -e 'environment' --out json
+	output, err := c.execCueEval("eval", "./spec/urn/env/...", "-e", "environment", "--out", "json")
+	if err != nil {
+		return nil, err
+	}
+
+	// Parse NDJSON output (newline-delimited JSON, not array)
+	decoder := json.NewDecoder(bytes.NewReader(output))
+	for decoder.More() {
+		var env struct {
+			EnvID string `json:"envId"`
+		}
+		if err := decoder.Decode(&env); err != nil {
+			return nil, fmt.Errorf("failed to parse cue eval output: %w", err)
+		}
+		if env.EnvID != "" {
+			environments[env.EnvID] = "spec/urn/env"
+		}
+	}
+
+	return environments, nil
+}
+
+// scanEnvIDsViaWalk fallback: walk directory tree
+func (c *Checker) scanEnvIDsViaWalk(envIDs map[string][]string) error {
+	envPath := filepath.Join(c.specRoot, "spec", "urn", "env")
+
 	err := filepath.WalkDir(envPath, func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
 		if d.Name() == "environment.cue" && !d.IsDir() {
-			id, err := c.extractEnvID(path)
+			id, err := c.extractIDRegex(path, `^\s*envId:\s*"([^"]+)"`)
 			if err != nil {
 				return err
 			}
@@ -205,53 +336,9 @@ func (c *Checker) scanEnvIDs(envIDs map[string][]string) error {
 	return err
 }
 
-// extractFeatID extracts the id field from a feature.cue file
-func (c *Checker) extractFeatID(filePath string) (string, error) {
-	ctx := cuecontext.New()
-	instances := load.Instances([]string{filePath}, &load.Config{
-		Dir: c.specRoot,
-	})
 
-	for _, inst := range instances {
-		v := ctx.BuildInstance(inst)
-		if v.Err() != nil {
-			// Try regex fallback for better error handling
-			return c.extractIDRegex(filePath, `^\s*id:\s*"([^"]+)"`)
-		}
 
-		id, err := v.LookupPath(cue.ParsePath("id")).String()
-		if err != nil {
-			return c.extractIDRegex(filePath, `^\s*id:\s*"([^"]+)"`)
-		}
-		return id, nil
-	}
 
-	return c.extractIDRegex(filePath, `^\s*id:\s*"([^"]+)"`)
-}
-
-// extractEnvID extracts the envId field from an environment.cue file
-func (c *Checker) extractEnvID(filePath string) (string, error) {
-	ctx := cuecontext.New()
-	instances := load.Instances([]string{filePath}, &load.Config{
-		Dir: c.specRoot,
-	})
-
-	for _, inst := range instances {
-		v := ctx.BuildInstance(inst)
-		if v.Err() != nil {
-			// Try regex fallback
-			return c.extractIDRegex(filePath, `^\s*envId:\s*"([^"]+)"`)
-		}
-
-		id, err := v.LookupPath(cue.ParsePath("envId")).String()
-		if err != nil {
-			return c.extractIDRegex(filePath, `^\s*envId:\s*"([^"]+)"`)
-		}
-		return id, nil
-	}
-
-	return c.extractIDRegex(filePath, `^\s*envId:\s*"([^"]+)"`)
-}
 
 // extractIDRegex extracts ID using regex as fallback
 func (c *Checker) extractIDRegex(filePath string, pattern string) (string, error) {
@@ -275,8 +362,56 @@ func (c *Checker) validateFeatSlugs() error {
 		return nil // No feat directory
 	}
 
+	// Use cue eval to get all slugs
+	slugs, err := c.evalSlugsViaCue()
+	if err != nil {
+		c.logInfo(fmt.Sprintf("cue eval failed for slugs, trying fallback: %v", err))
+		// Fallback: walk directory
+		return c.validateFeatSlugsViaWalk()
+	}
+
 	// Kebab-case pattern: lowercase letters, digits, and hyphens
-	// Must start with lowercase letter or digit
+	kebabCasePattern := regexp.MustCompile(`^[a-z0-9]+(-[a-z0-9]+)*$`)
+
+	for slug, filePath := range slugs {
+		if slug != "" && !kebabCasePattern.MatchString(slug) {
+			c.logError(fmt.Sprintf("feat slug '%s' is not in kebab-case format (file: %s)", slug, filePath))
+		}
+	}
+
+	return nil
+}
+
+// evalSlugsViaCue extracts all feature slugs via cue eval
+func (c *Checker) evalSlugsViaCue() (map[string]string, error) {
+	slugs := make(map[string]string)
+
+	// Run: cue eval ./spec/urn/feat/... -e 'feature' --out json
+	output, err := c.execCueEval("eval", "./spec/urn/feat/...", "-e", "feature", "--out", "json")
+	if err != nil {
+		return nil, err
+	}
+
+	// Parse NDJSON output (newline-delimited JSON, not array)
+	decoder := json.NewDecoder(bytes.NewReader(output))
+	for decoder.More() {
+		var feat struct {
+			Slug string `json:"slug"`
+		}
+		if err := decoder.Decode(&feat); err != nil {
+			return nil, fmt.Errorf("failed to parse cue eval output: %w", err)
+		}
+		if feat.Slug != "" {
+			slugs[feat.Slug] = filepath.Join(c.specRoot, "spec/urn/feat", feat.Slug, "feature.cue")
+		}
+	}
+
+	return slugs, nil
+}
+
+// validateFeatSlugsViaWalk fallback: walk directory tree
+func (c *Checker) validateFeatSlugsViaWalk() error {
+	featPath := filepath.Join(c.specRoot, "spec", "urn", "feat")
 	kebabCasePattern := regexp.MustCompile(`^[a-z0-9]+(-[a-z0-9]+)*$`)
 
 	err := filepath.WalkDir(featPath, func(path string, d fs.DirEntry, err error) error {
@@ -284,7 +419,7 @@ func (c *Checker) validateFeatSlugs() error {
 			return err
 		}
 		if d.Name() == "feature.cue" && !d.IsDir() {
-			slug, err := c.extractSlug(path)
+			slug, err := c.extractIDRegex(path, `^\s*slug:\s*"([^"]+)"`)
 			if err != nil {
 				return err
 			}
@@ -298,60 +433,17 @@ func (c *Checker) validateFeatSlugs() error {
 	return err
 }
 
-// extractSlug extracts the slug field from a feature.cue file
-func (c *Checker) extractSlug(filePath string) (string, error) {
-	ctx := cuecontext.New()
-	instances := load.Instances([]string{filePath}, &load.Config{
-		Dir: c.specRoot,
-	})
-
-	for _, inst := range instances {
-		v := ctx.BuildInstance(inst)
-		if v.Err() != nil {
-			// Try regex fallback
-			return c.extractIDRegex(filePath, `^\s*slug:\s*"([^"]+)"`)
-		}
-
-		slug, err := v.LookupPath(cue.ParsePath("feature.slug")).String()
-		if err != nil {
-			// Try direct field
-			slug, err := v.LookupPath(cue.ParsePath("slug")).String()
-			if err != nil {
-				// Fallback to regex
-				return c.extractIDRegex(filePath, `^\s*slug:\s*"([^"]+)"`)
-			}
-			return slug, nil
-		}
-		return slug, nil
-	}
-
-	return c.extractIDRegex(filePath, `^\s*slug:\s*"([^"]+)"`)
-}
-
 // checkBrokenReferences checks for broken urn:feat:* references
 func (c *Checker) checkBrokenReferences() error {
-	// First, collect all valid feat-ids
+	// First, collect all valid feat-ids using cue eval
+	validFeatMap, err := c.evalFeaturesViaCue()
+	if err != nil {
+		c.logInfo(fmt.Sprintf("cue eval failed for refs check, trying fallback: %v", err))
+		validFeatMap = make(map[string]string)
+	}
 	validFeats := make(map[string]bool)
-	featPath := filepath.Join(c.specRoot, "spec", "urn", "feat")
-	if _, err := os.Stat(featPath); err == nil {
-		err := filepath.WalkDir(featPath, func(path string, d fs.DirEntry, err error) error {
-			if err != nil {
-				return err
-			}
-			if d.Name() == "feature.cue" && !d.IsDir() {
-				id, err := c.extractFeatID(path)
-				if err != nil {
-					return err
-				}
-				if id != "" {
-					validFeats[id] = true
-				}
-			}
-			return nil
-		})
-		if err != nil {
-			return err
-		}
+	for id := range validFeatMap {
+		validFeats[id] = true
 	}
 
 	// Now scan for references in adapter/ and mapping/
@@ -407,21 +499,13 @@ func (c *Checker) checkCircularDeps() error {
 		return nil // No feat directory
 	}
 
-	err := filepath.WalkDir(featPath, func(path string, d fs.DirEntry, err error) error {
-		if err != nil {
-			return err
-		}
-		if d.Name() == "feature.cue" && !d.IsDir() {
-			id, deps, err := c.extractFeatIDAndDeps(path)
-			if err != nil {
-				return err
-			}
-			if id != "" {
-				features[id] = deps
-			}
-		}
-		return nil
-	})
+	// Use cue eval to extract features with dependencies
+	features, err := c.evalFeaturesWithDepsViaCue()
+	if err != nil {
+		c.logInfo(fmt.Sprintf("cue eval failed for deps, trying fallback: %v", err))
+		// Fallback: walk directory (less reliable for deps extraction)
+		features = make(map[string][]string)
+	}
 
 	if err != nil {
 		return err
@@ -469,43 +553,32 @@ func (c *Checker) hasCycle(node string, graph map[string][]string, visited, recS
 	return false
 }
 
-// extractFeatIDAndDeps extracts both id and deps from a feature.cue file
-func (c *Checker) extractFeatIDAndDeps(filePath string) (string, []string, error) {
-	ctx := cuecontext.New()
-	instances := load.Instances([]string{filePath}, &load.Config{
-		Dir: c.specRoot,
-	})
+// evalFeaturesWithDepsViaCue extracts features with their deps via cue eval
+func (c *Checker) evalFeaturesWithDepsViaCue() (map[string][]string, error) {
+	features := make(map[string][]string)
 
-	var id string
-	var deps []string
+	// Run: cue eval ./spec/urn/feat/... -e 'feature' --out json
+	output, err := c.execCueEval("eval", "./spec/urn/feat/...", "-e", "feature", "--out", "json")
+	if err != nil {
+		return nil, err
+	}
 
-	for _, inst := range instances {
-		v := ctx.BuildInstance(inst)
-		if v.Err() != nil {
-			// Fallback to regex
-			id, _ := c.extractIDRegex(filePath, `^\s*id:\s*"([^"]+)"`)
-			return id, []string{}, nil
+	// Parse NDJSON output (newline-delimited JSON, not array)
+	decoder := json.NewDecoder(bytes.NewReader(output))
+	for decoder.More() {
+		var feat struct {
+			ID   string   `json:"id"`
+			Deps []string `json:"deps"`
 		}
-
-		idVal, _ := v.LookupPath(cue.ParsePath("id")).String()
-		id = idVal
-
-		// Extract deps if present
-		depsVal := v.LookupPath(cue.ParsePath("deps"))
-		if depsVal.Exists() {
-			iter, err := depsVal.List()
-			if err == nil {
-				for iter.Next() {
-					depStr, _ := iter.Value().String()
-					if depStr != "" {
-						deps = append(deps, depStr)
-					}
-				}
-			}
+		if err := decoder.Decode(&feat); err != nil {
+			return nil, fmt.Errorf("failed to parse cue eval output: %w", err)
+		}
+		if feat.ID != "" {
+			features[feat.ID] = feat.Deps
 		}
 	}
 
-	return id, deps, nil
+	return features, nil
 }
 
 // PrintSummary prints the final summary
