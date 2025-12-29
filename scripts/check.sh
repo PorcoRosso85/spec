@@ -38,7 +38,9 @@ case "$MODE" in
     ;;
     
   unit)
-    echo "ℹ️  spec:unit: placeholder (no tests yet)"
+    echo "🧪 Phase 2: unit tests"
+    bash tests/unit/run.sh
+    echo "✅ Phase 2 unit PASS"
     ;;
     
   e2e)
