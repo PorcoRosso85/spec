@@ -42,11 +42,14 @@
       
       echo "  ① Building spec-lint..."
       cd ./tools/spec-lint
-      go build -mod=readonly -o spec-lint cmd/main.go
+      # Build to temp location since ${self} is immutable in sandbox
+      SPEC_LINT_BIN=$(mktemp --suffix=spec-lint)
+      go build -mod=readonly -o $SPEC_LINT_BIN cmd/main.go
+      SPEC_LINT_PATH=$SPEC_LINT_BIN
       cd ${self}
       
       echo "  ② spec-lint --mode fast"
-      bash ./tools/spec-lint/spec-lint.sh . --mode fast
+      $SPEC_LINT_PATH . --mode fast
       
       echo "  ③ cue fmt --check"
       ${pkgs.cue}/bin/cue fmt --check --files ./spec
@@ -72,11 +75,13 @@
       
       echo "  ① Building spec-lint..."
       cd ./tools/spec-lint
-      go build -mod=readonly -o spec-lint cmd/main.go
+      SPEC_LINT_BIN=$(mktemp --suffix=spec-lint)
+      go build -mod=readonly -o $SPEC_LINT_BIN cmd/main.go
+      SPEC_LINT_PATH=$SPEC_LINT_BIN
       cd ${self}
       
       echo "  ② spec-lint --mode slow"
-      bash ./tools/spec-lint/spec-lint.sh . --mode slow
+      $SPEC_LINT_PATH . --mode slow
       
       echo "  ③ cue fmt --check"
       ${pkgs.cue}/bin/cue fmt --check --files ./spec
