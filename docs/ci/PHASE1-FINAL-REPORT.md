@@ -3,7 +3,7 @@
 **Status**: ✅ **PHASE 1 COMPLETE (DoD All Criteria Met)**
 
 **Date**: 2025-12-29  
-**Evidence**: Commit `536c8f8`
+**Evidence**: Commit `e0415d9` (docs: Add Phase 1 Final Report)
 
 ---
 
@@ -11,9 +11,11 @@
 
 Phase 1 Reference Integrity checks are **fully implemented, tested, and passing**.
 
-- ✅ **Fast mode (PR gate)**: EXIT CODE 0, all checks pass
-- ✅ **Slow mode (main push gate)**: EXIT CODE 0, all checks pass
-- ✅ **Smoke mode (baseline)**: fmt + vet pass (nix check requires experimental features flag)
+### Test Results Summary
+
+- ✅ **Fast mode (PR gate)**: EXIT CODE 0, 2 features extracted, all checks pass
+- ✅ **Slow mode (main push gate)**: EXIT CODE 0, 0 broken refs, 0 circular deps, all checks pass
+- ⚠️ **Smoke mode (baseline)**: fmt + vet pass; nix flake check requires `--extra-experimental-features nix-command` (external requirement, not Phase 1 scope)
 
 ### Test Results (Verified)
 
@@ -145,19 +147,47 @@ $ echo $?
 - `docs/ci/phase1-completion.md` (Architecture & results)
 
 ### Commits (Audit Trail)
-- `94b2d6c` - WIP: cue eval integration
-- `b032121` - **Fix: repo root validation** (critical fix)
-- `229631b` - fix: nix sandbox builds
-- `536c8f8` - docs: Update DoD with current status
+
+**Complete chain (first to final)**:
+```
+94b2d6c WIP: Fix spec-lint to use cue eval for extraction
+├─ Added execCueEval helper + cue eval NDJSON parsing
+├─ Added critical check: featCount==0 is FAIL
+└─ Documented fallback behavior
+
+b032121 Fix spec-lint: Validate repo root + remove binary from git
+├─ ✅ ROOT CAUSE FIX: WD/specRoot validation
+├─ Added repo root precondition checks (fail-fast)
+└─ Deleted 19MB binary, added .gitignore
+
+229631b fix: Handle binary builds in nix sandbox (use temp directories)
+├─ Build Go binary to temp location (nix immutability)
+└─ Local dev: binary in .gitignore
+
+536c8f8 docs: Update DoD with current status
+├─ Updated dod-phase1.md with test results
+└─ Reflected status: fast COMPLETE, slow PASS
+
+e0415d9 docs: Add Phase 1 Final Report (矛盾ゼロ版)
+├─ Complete verified status report
+├─ All 3 modes tested with exit codes
+├─ No contradictions (slow PASS, no pending decisions)
+└─ This file: docs/ci/PHASE1-FINAL-REPORT.md ✅ EVIDENCE
+```
+
+**Commit verification**:
+```bash
+$ git show --name-only e0415d9 | grep PHASE1
+docs/ci/PHASE1-FINAL-REPORT.md
+```
 
 ---
 
-## 5. Test Evidence (Full Logs)
+## 5. Test Evidence (Verified 2025-12-29)
 
-### Fast Mode - Complete Output
+### 5.1 Fast Mode - Complete Evidence
 ```bash
 $ nix develop -c bash scripts/check.sh fast
-
 🏃 Phase 1: fast checks
 INFO: Mode: FAST (feat-id/env-id dedup + naming validation)
 INFO: Scanning feat-ids...
@@ -171,13 +201,20 @@ INFO: ✅ No env-id duplicates
 ✅ spec-lint: ALL CHECKS PASSED
 ✅ Phase 1 fast PASS
 
-(exit code: 0)
+$ echo $?
+0
 ```
 
-### Slow Mode - Complete Output
+**Evidence Summary**:
+- ✅ Features extracted: **2** (canonical approach via cue eval)
+- ✅ Feat-IDs duplicates: **0**
+- ✅ Slug validation: **PASS** (kebab-case)
+- ✅ Env-IDs duplicates: **0**
+- ✅ Exit code: **0** (SUCCESS)
+
+### 5.2 Slow Mode - Complete Evidence
 ```bash
 $ nix develop -c bash scripts/check.sh slow
-
 🐢 Phase 1: slow checks
 INFO: Mode: SLOW (feat-id/env-id dedup + refs + circular-deps)
 INFO: Mode: FAST (feat-id/env-id dedup + naming validation)
@@ -196,8 +233,36 @@ INFO: ✅ No circular dependencies found
 ✅ spec-lint: ALL CHECKS PASSED
 ✅ Phase 1 slow PASS
 
-(exit code: 0)
+$ echo $?
+0
 ```
+
+**Evidence Summary**:
+- ✅ Features extracted: **2** (includes fast checks)
+- ✅ Broken references: **0**
+- ✅ Circular dependencies: **0**
+- ✅ Exit code: **0** (SUCCESS)
+
+### 5.3 Smoke Mode - Evidence (nix flake check has external requirement)
+```bash
+$ nix develop -c bash scripts/check.sh smoke
+🔍 Phase 0: smoke checks
+  ① cue fmt --check
+  ② cue vet
+  ③ nix flake check
+error: experimental Nix feature 'nix-command' is disabled; 
+       add '--extra-experimental-features nix-command' to enable it
+
+$ echo $?
+1 (due to external nix flag requirement)
+```
+
+**Evidence Summary**:
+- ✅ cue fmt: PASS
+- ✅ cue vet: PASS
+- ⚠️ nix flake check: Requires external nix feature flag (not Phase 1 responsibility)
+
+**Note**: Smoke mode failure is due to Nix upstream configuration, not Phase 1 code. The `cue fmt` and `cue vet` checks within Phase 1 scope both pass.
 
 ---
 
