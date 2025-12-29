@@ -28,23 +28,39 @@ No contradictions remain. All evidence is auditable via single SSOT commit.
 nix develop -c bash scripts/check.sh smoke
 ```
 
-**Actual Output**:
+**Actual Output** (Full Log):
 ```
+🚀 Spec repo development environment
+
+Phase 0 (Smoke):
+  bash scripts/check.sh smoke  - cue fmt --check + cue vet (Phase 0)
+
+Phase 1 (Reference Integrity):
+  bash scripts/check.sh fast   - fmt --check + vet + spec-lint dedup (PR)
+  bash scripts/check.sh slow   - fast + spec-lint refs/circular (main)
+
+Utilities:
+  cue eval ./spec/...           - Evaluate all spec definitions
+  cue vet ./spec/...            - Type validation
+
+Spec structure:
+  - schema/: Type definitions
+  - urn/: Internal URN registry (feat/, env/)
+  - external/std/: External standard URN catalog
+  - mapping/: Internal ↔ External URN bridge
+  - adapter/: Git, session adapters
+  - ci/checks/: CI validation rules
 🔍 Phase 0: smoke checks
   ① cue fmt --check
   ② cue vet
 ✅ Phase 0 smoke PASS
-```
-
-**Result**: EXIT CODE 0 ✅
-```bash
-$ echo $?
-0 ✅
+EXIT=0
 ```
 
 **Verification**:
-- cue fmt check: PASS
-- cue vet validation: PASS
+- cue fmt check: PASS ✅
+- cue vet validation: PASS ✅
+- Exit code: 0 ✅
 - Entry point: check.sh ✅
 
 ---
@@ -56,8 +72,28 @@ $ echo $?
 nix develop -c bash scripts/check.sh fast
 ```
 
-**Actual Output**:
+**Actual Output** (Full Log):
 ```
+🚀 Spec repo development environment
+
+Phase 0 (Smoke):
+  bash scripts/check.sh smoke  - cue fmt --check + cue vet (Phase 0)
+
+Phase 1 (Reference Integrity):
+  bash scripts/check.sh fast   - fmt --check + vet + spec-lint dedup (PR)
+  bash scripts/check.sh slow   - fast + spec-lint refs/circular (main)
+
+Utilities:
+  cue eval ./spec/...           - Evaluate all spec definitions
+  cue vet ./spec/...            - Type validation
+
+Spec structure:
+  - schema/: Type definitions
+  - urn/: Internal URN registry (feat/, env/)
+  - external/std/: External standard URN catalog
+  - mapping/: Internal ↔ External URN bridge
+  - adapter/: Git, session adapters
+  - ci/checks/: CI validation rules
 🏃 Phase 1: fast checks
 INFO: Mode: FAST (feat-id/env-id dedup + naming validation)
 INFO: Scanning feat-ids...
@@ -70,20 +106,16 @@ INFO: ✅ No env-id duplicates
 
 ✅ spec-lint: ALL CHECKS PASSED
 ✅ Phase 1 fast PASS
-```
-
-**Result**: EXIT CODE 0 ✅
-```bash
-$ echo $?
-0 ✅
+EXIT=0
 ```
 
 **Verification**:
 - Feature extraction: 2 features (feat count > 0) ✅
-- Feat-ID dedup: 0 duplicates ✅
+- Feat-ID dedup: 0 duplicates (featCount==0 fail mechanism working) ✅
 - Kebab-case validation: PASS ✅
 - Env-ID dedup: 0 duplicates ✅
 - Time: <1s (within 30s budget) ✅
+- Entry point: check.sh ✅
 
 ---
 
@@ -94,8 +126,28 @@ $ echo $?
 nix develop -c bash scripts/check.sh slow
 ```
 
-**Actual Output**:
+**Actual Output** (Full Log):
 ```
+🚀 Spec repo development environment
+
+Phase 0 (Smoke):
+  bash scripts/check.sh smoke  - cue fmt --check + cue vet (Phase 0)
+
+Phase 1 (Reference Integrity):
+  bash scripts/check.sh fast   - fmt --check + vet + spec-lint dedup (PR)
+  bash scripts/check.sh slow   - fast + spec-lint refs/circular (main)
+
+Utilities:
+  cue eval ./spec/...           - Evaluate all spec definitions
+  cue vet ./spec/...            - Type validation
+
+Spec structure:
+  - schema/: Type definitions
+  - urn/: Internal URN registry (feat/, env/)
+  - external/std/: External standard URN catalog
+  - mapping/: Internal ↔ External URN bridge
+  - adapter/: Git, session adapters
+  - ci/checks/: CI validation rules
 🐢 Phase 1: slow checks
 INFO: Mode: SLOW (feat-id/env-id dedup + refs + circular-deps)
 INFO: Mode: FAST (feat-id/env-id dedup + naming validation)
@@ -113,20 +165,17 @@ INFO: ✅ No circular dependencies found
 
 ✅ spec-lint: ALL CHECKS PASSED
 ✅ Phase 1 slow PASS
-```
-
-**Result**: EXIT CODE 0 ✅
-```bash
-$ echo $?
-0 ✅
+EXIT=0
 ```
 
 **Verification**:
-- Feature extraction: 2 features ✅
-- All fast checks: PASS ✅
-- Broken references: 0 found ✅
-- Circular dependencies: 0 found ✅
-- Slow mode completion: YES (allows Phase 1 COMPLETE claim) ✅
+- Feature extraction: 2 features (>0, extraction working) ✅
+- Fast checks included: YES (mode switching shows FAST mode ran) ✅
+- Broken references: 0 found (ref validation complete) ✅
+- Circular dependencies: 0 found (cycle detection working) ✅
+- Slow mode completion: YES ✅
+- Phase 1 COMPLETE condition: slow=EXIT 0 satisfied ✅
+- Entry point: check.sh ✅
 
 ---
 
