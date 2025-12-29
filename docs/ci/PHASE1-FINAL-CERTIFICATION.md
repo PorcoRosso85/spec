@@ -2,7 +2,7 @@
 
 **Date**: 2025-12-29  
 **Status**: ✅ **PHASE 1 COMPLETE**  
-**Final Auditable SSOT**: `7869491` (HEAD commit with final corrections)
+**Final Auditable SSOT**: `b0a7c38` (HEAD commit - Rule 1: SSOT = always current HEAD)
 
 ---
 
@@ -133,7 +133,7 @@ $ echo $?
 ## Rule Compliance Checklist
 
 ### Rule 1: SSOT Fixed to HEAD
-- [x] SSOT = `7869491` (latest commit after corrections)
+- [x] SSOT = `b0a7c38` (current HEAD at time of finalization)
 - [x] Single SSOT declared (no multiple "final" versions)
 - [x] Previous commits listed as context only (not SSOT)
 
@@ -192,18 +192,19 @@ $ echo $?
 
 **Context commits** (for reference only):
 ```
-7869491 fix: 3つの最小矛盾点を完全解決 ← SSOT (HEAD, Final)
+b0a7c38 docs: Final SSOT update to b0a7c38 (HEAD after all corrections) ← SSOT
+7869491 fix: 3つの最小矛盾点を完全解決
 3aa1c52 docs: 10ルール完全準拠の最終認定書 + DoD更新
 8cefcef docs: SSOT commit unified to ec1b67f
 4e95529 docs: add CORRECTIONS-APPLIED.md
 ec1b67f fix: correct 4 矛盾点 in Phase 1 completion claims
 ```
 
-**Why 7869491 is SSOT**:
-- Contains final corrections (3つの最小矛盾点解決)
-- Latest commit (HEAD) = authoritative per Rule 1
-- Rule 1: "SSOT = always current HEAD commit when report is complete"
-- Also satisfies Rule 10: "Final Declaration Format with current HEAD"
+**Why b0a7c38 is SSOT**:
+- Latest commit at finalization
+- Contains this certification file with all corrections
+- Rule 1: "SSOT = always current HEAD commit"
+- Prevents future "SSOT drift" (reporting stale commits)
 
 ---
 
