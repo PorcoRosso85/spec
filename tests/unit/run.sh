@@ -139,15 +139,23 @@ echo "  SKIP:  $SKIP"
 echo "  TOTAL: $((PASS + FAIL + XFAIL + SKIP))"
 echo "===================="
 
-# Exit with appropriate code (XFAIL doesn't cause failure)
+# Exit with appropriate code (XFAIL doesn't cause failure, but warn if accumulating)
 if [[ $FAIL -gt 0 ]]; then
-    echo "❌ Some tests failed"
+    echo "❌ Test run FAILED"
     exit 1
-else
-    if [[ $XFAIL -gt 0 ]]; then
-        echo "✅ All tests passed (with $XFAIL known issue(s) documented)"
-    else
-        echo "✅ All tests passed"
-    fi
-    exit 0
 fi
+
+# XFAIL limit: Warn if known issues are accumulating (max 1 acceptable)
+MAX_XFAIL=1
+if [[ $XFAIL -gt $MAX_XFAIL ]]; then
+    echo "⚠️  WARNING: XFAIL count ($XFAIL) exceeds limit ($MAX_XFAIL)"
+    echo "   Known issues are accumulating - prioritize fixes!"
+fi
+
+# Report precise status (avoid "all passed" when XFAIL exists)
+if [[ $XFAIL -gt 0 ]]; then
+    echo "✅ Test run OK: PASS=$PASS, XFAIL=$XFAIL (known issues), FAIL=$FAIL"
+else
+    echo "✅ Test run OK: PASS=$PASS, FAIL=$FAIL"
+fi
+exit 0
