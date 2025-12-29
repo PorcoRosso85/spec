@@ -26,7 +26,26 @@ type Checker struct {
 }
 
 // NewChecker creates a new checker instance
+// PRECONDITION: specRoot must be repo root (contains cue.mod/module.cue and spec/)
 func NewChecker(specRoot, mode string) *Checker {
+	// Validate specRoot is a real repo root
+	// This catches WD mistakes early (KISS: fail fast with clear message)
+	cueModPath := filepath.Join(specRoot, "cue.mod", "module.cue")
+	specPath := filepath.Join(specRoot, "spec")
+	
+	if _, err := os.Stat(cueModPath); os.IsNotExist(err) {
+		fmt.Fprintf(os.Stderr, "ERROR: Missing cue.mod/module.cue at %s\n", cueModPath)
+		fmt.Fprintf(os.Stderr, "spec-lint requires repo root path (containing cue.mod/module.cue)\n")
+		fmt.Fprintf(os.Stderr, "Usage: spec-lint <repo-root> --mode <fast|slow>\n")
+		os.Exit(1)
+	}
+	if _, err := os.Stat(specPath); os.IsNotExist(err) {
+		fmt.Fprintf(os.Stderr, "ERROR: Missing spec/ directory at %s\n", specPath)
+		fmt.Fprintf(os.Stderr, "spec-lint requires repo root path (containing spec/)\n")
+		fmt.Fprintf(os.Stderr, "Usage: spec-lint <repo-root> --mode <fast|slow>\n")
+		os.Exit(1)
+	}
+
 	return &Checker{
 		specRoot: specRoot,
 		mode:     mode,
