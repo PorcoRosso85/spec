@@ -177,12 +177,26 @@ tools/spec-lint/README.md         - 実装詳細を正確に
 - ✅ 4つの矛盾をすべて解決
 - ✅ すべてのテストがPASS
 - ✅ すべての文書が一貫性を持つ
-- ✅ 監査対象が明確（b9d7049）
+- ✅ 監査対象が明確（ec1b67f）
 
 **次のステップ**: Phase 2（Unit/E2E Tests & Registry）に進める準備完了
 
 ---
 
-**Auditable Reference**: Commit `ec1b67f`  
+## SSOT Commit定義
+
+**最終SSOT COMMIT**: `ec1b67f`（fix: correct 4 矛盾点 in Phase 1 completion claims）
+
+このコミットにより、Phase 1は以下の条件を満たしています：
+
+- ✅ すべての修正を含む（smoke/Phase0/SSOT/CUE説明）
+- ✅ すべてのテストがPASS（smoke/fast/slow EXIT 0）
+- ✅ すべての文書が一貫性を持つ
+- ✅ 監査対象が単一・明確
+
+---
+
+**Auditable Reference**: Commit `ec1b67f` (SINGLE SOURCE OF TRUTH)  
+**Supporting Documentation**: Commit `4e95529` (CORRECTIONS-APPLIED.md)  
 **Applied Fixes**: 4/4 complete  
-**Status**: Phase 1 ✅ PERFECT
+**Status**: Phase 1 ✅ PERFECT (矛盾ゼロ)
