@@ -19,6 +19,7 @@
             cue
             git
             bash
+            go
           ];
 
           shellHook = ''

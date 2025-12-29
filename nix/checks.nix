@@ -31,7 +31,7 @@
   # Phase 1 fast: feat-id/env-id dedup only (PR mode)
   spec-fast = pkgs.runCommand "spec-fast"
     {
-      buildInputs = with pkgs; [ cue git bash ];
+      buildInputs = with pkgs; [ cue git bash go ];
     }
     ''
       set -euo pipefail
@@ -39,13 +39,18 @@
       
       echo "🏃 Phase 1: fast checks"
       
-      echo "  ① spec-lint --mode fast"
+      echo "  ① Building spec-lint..."
+      cd ./tools/spec-lint
+      go build -o spec-lint cmd/main.go
+      cd ${self}
+      
+      echo "  ② spec-lint --mode fast"
       bash ./tools/spec-lint/spec-lint.sh . --mode fast
       
-      echo "  ② cue fmt --check"
+      echo "  ③ cue fmt --check"
       ${pkgs.cue}/bin/cue fmt --check --files ./spec
       
-      echo "  ③ cue vet"
+      echo "  ④ cue vet"
       ${pkgs.cue}/bin/cue vet ./spec/...
       
       echo "✅ Phase 1 fast PASS"
@@ -55,7 +60,7 @@
   # Phase 1 slow: fast + broken refs (main push mode)
   spec-slow = pkgs.runCommand "spec-slow"
     {
-      buildInputs = with pkgs; [ cue git bash ];
+      buildInputs = with pkgs; [ cue git bash go ];
     }
     ''
       set -euo pipefail
@@ -63,13 +68,18 @@
       
       echo "🐢 Phase 1: slow checks"
       
-      echo "  ① spec-lint --mode slow"
+      echo "  ① Building spec-lint..."
+      cd ./tools/spec-lint
+      go build -o spec-lint cmd/main.go
+      cd ${self}
+      
+      echo "  ② spec-lint --mode slow"
       bash ./tools/spec-lint/spec-lint.sh . --mode slow
       
-      echo "  ② cue fmt --check"
+      echo "  ③ cue fmt --check"
       ${pkgs.cue}/bin/cue fmt --check --files ./spec
       
-      echo "  ③ cue vet"
+      echo "  ④ cue vet"
       ${pkgs.cue}/bin/cue vet ./spec/...
       
       echo "✅ Phase 1 slow PASS"
