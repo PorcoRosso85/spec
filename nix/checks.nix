@@ -35,13 +35,14 @@
     }
     ''
       set -euo pipefail
+      export HOME=$(mktemp -d)
       cd ${self}
       
       echo "🏃 Phase 1: fast checks"
       
       echo "  ① Building spec-lint..."
       cd ./tools/spec-lint
-      go build -o spec-lint cmd/main.go
+      go build -mod=readonly -o spec-lint cmd/main.go
       cd ${self}
       
       echo "  ② spec-lint --mode fast"
@@ -64,13 +65,14 @@
     }
     ''
       set -euo pipefail
+      export HOME=$(mktemp -d)
       cd ${self}
       
       echo "🐢 Phase 1: slow checks"
       
       echo "  ① Building spec-lint..."
       cd ./tools/spec-lint
-      go build -o spec-lint cmd/main.go
+      go build -mod=readonly -o spec-lint cmd/main.go
       cd ${self}
       
       echo "  ② spec-lint --mode slow"
