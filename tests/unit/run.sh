@@ -145,11 +145,18 @@ if [[ $FAIL -gt 0 ]]; then
     exit 1
 fi
 
-# XFAIL limit: Warn if known issues are accumulating (max 1 acceptable)
+# XFAIL limit: Warn/fail if known issues are accumulating (max 1 acceptable)
 MAX_XFAIL=1
+XFAIL_STRICT=${XFAIL_STRICT:-false}  # Set XFAIL_STRICT=true for main branch enforcement
+
 if [[ $XFAIL -gt $MAX_XFAIL ]]; then
     echo "⚠️  WARNING: XFAIL count ($XFAIL) exceeds limit ($MAX_XFAIL)"
     echo "   Known issues are accumulating - prioritize fixes!"
+    
+    if [[ "$XFAIL_STRICT" == "true" ]]; then
+        echo "❌ XFAIL limit exceeded in strict mode (main branch)"
+        exit 1
+    fi
 fi
 
 # Report precise status (avoid "all passed" when XFAIL exists)
