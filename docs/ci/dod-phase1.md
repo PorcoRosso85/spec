@@ -329,6 +329,85 @@ Then: **Phase 1 COMPLETE (binding claim)**
 
 ---
 
-**Document Version**: 1.0 (2025-12-29)  
+---
+
+## 11. Phase 1 Complete 宣言フォーマット（必須）
+
+### 11.1 SSOTルール
+- SSOT（Single Source of Truth）は常に **その時点のHEAD（最新コミット）** を指す
+- 報告書に記載する SSOT は **1つだけ**
+- それ以前のコミットIDは「経緯」として列挙してよいが、SSOT扱いしない
+
+### 11.2 最終宣言に含める最低限の証拠
+```
+Status: PHASE 1 COMPLETE
+Final Auditable SSOT: <HEADのコミットID>
+
+Evidence:
+  Smoke (Phase 0):
+    $ nix develop -c bash scripts/check.sh smoke
+    → EXIT 0 ✅ (cue fmt + cue vet PASS)
+  
+  Fast (Phase 1 PR gate):
+    $ nix develop -c bash scripts/check.sh fast
+    → EXIT 0 ✅ (2 features extracted, no duplicates, kebab-case valid)
+  
+  Slow (Phase 1 main gate):
+    $ nix develop -c bash scripts/check.sh slow
+    → EXIT 0 ✅ (2 features, 0 broken refs, 0 circular deps)
+```
+
+### 11.3 禁止事項
+- ❌ SSOTを複数指定（「最終」が2つ以上になる状態）
+- ❌ slowが落ちた状態で COMPLETE を宣言
+- ❌ 報告内容とコミット内容がズレている状態
+- ❌ タグ・分岐を SSOT 指定の代わりに使う
+
+### 11.4 報告書テンプレート（固定）
+```markdown
+## Phase 1 COMPLETE
+
+Date: YYYY-MM-DD
+Status: PHASE 1 COMPLETE
+Final Auditable SSOT: <commit-id>
+
+### Evidence (Auditable Proof)
+
+**Smoke (Phase 0)**:
+```
+nix develop -c bash scripts/check.sh smoke
+🔍 Phase 0: smoke checks
+  ① cue fmt --check
+  ② cue vet
+✅ Phase 0 smoke PASS
+EXIT: 0 ✅
+```
+
+**Fast (Phase 1 - PR gate)**:
+```
+nix develop -c bash scripts/check.sh fast
+...
+INFO: cue eval extracted 2 features via canonical approach
+INFO: ✅ No feat-id duplicates (2 unique)
+✅ spec-lint: ALL CHECKS PASSED
+✅ Phase 1 fast PASS
+EXIT: 0 ✅
+```
+
+**Slow (Phase 1 - main gate)**:
+```
+nix develop -c bash scripts/check.sh slow
+...
+INFO: ✅ No broken references found (0 found)
+INFO: ✅ No circular dependencies found (0 found)
+✅ spec-lint: ALL CHECKS PASSED
+✅ Phase 1 slow PASS
+EXIT: 0 ✅
+```
+```
+
+---
+
+**Document Version**: 1.1 (2025-12-29 - Added SSOT/Evidence Rules)  
 **Authority**: spec-repo maintainers  
 **Binding**: YES (overrides all other claims about "Phase 1 complete")
