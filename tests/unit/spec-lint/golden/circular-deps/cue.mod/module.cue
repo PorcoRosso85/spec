@@ -1,2 +1,2 @@
-module: "github.com/test/circular-deps@v0"
-language: version: "v0.9.0"
+module: "test.example/circular-deps"
+language: version: "v0.11.1"

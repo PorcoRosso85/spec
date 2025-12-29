@@ -68,9 +68,9 @@ run_test() {
     fi
     
     if $test_passed; then
-        ((PASS++))
+        PASS=$((PASS + 1))
     else
-        ((FAIL++))
+        FAIL=$((FAIL + 1))
     fi
 }
 

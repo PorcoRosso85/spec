@@ -1,6 +1,8 @@
 package schema
+
 #Feature: {
-    slug: string
     id: string
-    deps?: [...string]
+    slug: string
+    title: string
+    depends_on?: [...string]
 }
