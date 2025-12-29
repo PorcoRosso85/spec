@@ -2,7 +2,7 @@
 
 **Date**: 2025-12-29  
 **Status**: ✅ **PHASE 1 COMPLETE**  
-**Final Auditable SSOT**: `b0a7c38` (HEAD commit - Rule 1: SSOT = always current HEAD)
+**Final Auditable SSOT**: `80b7eaa` (This document's audit baseline)
 
 ---
 
@@ -181,8 +181,8 @@ EXIT=0
 
 ## Rule Compliance Checklist
 
-### Rule 1: SSOT Fixed to HEAD
-- [x] SSOT = `b0a7c38` (current HEAD at time of finalization)
+### Rule 1: SSOT Fixed
+- [x] SSOT = `80b7eaa` (This document's audit baseline)
 - [x] Single SSOT declared (no multiple "final" versions)
 - [x] Previous commits listed as context only (not SSOT)
 
@@ -241,7 +241,8 @@ EXIT=0
 
 **Context commits** (for reference only):
 ```
-b0a7c38 docs: Final SSOT update to b0a7c38 (HEAD after all corrections) ← SSOT
+80b7eaa docs: Replace test summaries with FULL ACTUAL LOGS for auditability ← AUDIT BASELINE
+b0a7c38 docs: Final SSOT update to b0a7c38
 7869491 fix: 3つの最小矛盾点を完全解決
 3aa1c52 docs: 10ルール完全準拠の最終認定書 + DoD更新
 8cefcef docs: SSOT commit unified to ec1b67f
@@ -249,11 +250,10 @@ b0a7c38 docs: Final SSOT update to b0a7c38 (HEAD after all corrections) ← SSOT
 ec1b67f fix: correct 4 矛盾点 in Phase 1 completion claims
 ```
 
-**Why b0a7c38 is SSOT**:
-- Latest commit at finalization
-- Contains this certification file with all corrections
-- Rule 1: "SSOT = always current HEAD commit"
-- Prevents future "SSOT drift" (reporting stale commits)
+**Why 80b7eaa is Audit Baseline**:
+- Contains this certification file (PHASE1-FINAL-CERTIFICATION.md)
+- Contains complete evidence (all 3 modes with full logs)
+- Single, unambiguous reference point for auditing
 
 ---
 
@@ -289,16 +289,14 @@ Phase 2 candidates:
 
 ---
 
-## Important: SSOT Reference Rule
+## Important: SSOT Reference Rule (Operational)
 
-Per **Rule 1**, SSOT is always "the current HEAD commit when this certification is finalized".
+**This certification's audit baseline is fixed at commit `80b7eaa`.**
 
-If you are reading this in the future:
-1. Check current HEAD: `git log --oneline -1`
-2. If HEAD differs from SSOT stated above, use **current HEAD as authoritative**
-3. Verify: `git show <HEAD> -- docs/ci/PHASE1-FINAL-CERTIFICATION.md`
-
-This prevents "SSOT drift" where older reports reference stale commits.
+For future operations (Phase 2+):
+- When creating new certification documents, use the same pattern: **document's commit = audit baseline**
+- This prevents "SSOT drift" (reports referencing stale commits)
+- Rule 1 principle: "One document = one audit baseline" (not a moving HEAD)
 
 ---
 
