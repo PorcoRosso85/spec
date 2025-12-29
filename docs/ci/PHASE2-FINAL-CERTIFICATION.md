@@ -39,12 +39,18 @@ Phase 2.0 test infrastructure is **complete and auditable**.
 
 ## Executive Evidence (Auditable Proof)
 
+**Evidence captured at**:
+```
+git rev-parse HEAD
+8573406
+```
+
 **Command**:
 ```bash
 nix develop -c bash scripts/check.sh unit
 ```
 
-**Actual Output** (at commit `6262cce`):
+**Actual Output** (at commit `8573406`):
 ```
 🧪 Running spec-lint unit tests
 
@@ -229,10 +235,51 @@ duplicate-feat-id-BROKEN/XFAIL:
 ```
 
 **Benefits**:
-- ✅ CI stays green
+- ✅ CI stays green (in PR mode)
 - ✅ No false security ("5/6 working" is honest)
 - ✅ Bugs explicitly documented
 - ✅ Zero code change needed when bug fixed (just rm XFAIL)
+
+### XFAIL Limit Enforcement ("破れないゲート")
+
+**MAX_XFAIL**: 1 (maximum acceptable known issues)
+
+**Enforcement mode** (branch-dependent):
+
+| Branch | Mode | XFAIL > MAX | Behavior |
+|--------|------|-------------|----------|
+| **PR** | Lenient | ⚠️  WARNING only | exit 0 (allows development) |
+| **main** | **Strict** | ❌ **FAIL** | **exit 1 (unbreakable gate)** |
+
+**Implementation**:
+```bash
+# run.sh
+XFAIL_STRICT=${XFAIL_STRICT:-false}
+
+if [[ $XFAIL -gt $MAX_XFAIL ]]; then
+    echo "⚠️  WARNING: XFAIL exceeds limit"
+    if [[ "$XFAIL_STRICT" == "true" ]]; then
+        exit 1  # Fail in strict mode
+    fi
+fi
+```
+
+**CI workflow**:
+```yaml
+# PR: warn only
+unit:
+  run: nix develop -c bash scripts/check.sh unit
+
+# main: enforce limit
+unit-strict:
+  run: XFAIL_STRICT=true nix develop -c bash scripts/check.sh unit
+```
+
+**Effect**:
+- ✅ PRs can introduce XFAIL temporarily (development continues)
+- ✅ main branch **cannot merge** if XFAIL > 1
+- ✅ Forces bug fix prioritization
+- ✅ "破れないゲート" = bugs cannot accumulate on main
 
 ---
 
