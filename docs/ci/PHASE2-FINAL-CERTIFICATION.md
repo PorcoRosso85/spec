@@ -1,33 +1,39 @@
-# Phase 2 Unit Tests (spec-lint Golden Fixtures) - Final Certification (CORRECTED)
+# Phase 2 Unit Tests (spec-lint Golden Fixtures) - Final Certification
 
 **Date**: 2025-12-29  
-**Status**: ✅ **PHASE 2.0 COMPLETE** (with 1 known spec-lint bug documented)  
-**Auditable SSOT**: `b4cefdb` (all code + evidence at this single commit)
+**Status**: ✅ **PHASE 2.0 TEST INFRASTRUCTURE COMPLETE**  
+**Auditable SSOT**: `ee80a4c` (HEAD at time of certification)
 
-**Previous versions**: 
-- `7d6e69f`: Initial cert (had 3 broken tests + no positive test)
-- `9c5ffbe`: CI integration
-- `60cd683`: run.sh bug fix
+**Status Summary**:
+- ✅ 5/6 checks verified and working
+- ⚠️  1/6 blocked by spec-lint bug (documented as XFAIL, not counted as failure)
+- ✅ Test infrastructure complete and production-ready
+- ✅ No contradictions, single SSOT, bugs explicitly documented
 
 ---
 
 ## Summary
 
-Phase 2.0 Unit Test implementation is **complete and auditable**.
+Phase 2.0 test infrastructure is **complete and auditable**.
 
-**What works**:
-- ✅ 6 golden test fixtures (5 negative + 1 positive)
-- ✅ tests/unit/run.sh runner (bash arithmetic bug fixed)
+**What works** (5/6 checks):
+- ✅ Broken reference detection
+- ✅ Circular dependency detection
+- ✅ Invalid slug detection (kebab-case)
+- ✅ Empty spec detection
+- ✅ Valid spec (positive test)
+
+**Known limitation** (1/6 check, XFAIL status):
+- ⚠️  Duplicate feat-id detection blocked by spec-lint bug
+- Tracked as XFAIL (expected failure, does not fail CI)
+- Documented in `tests/unit/spec-lint/KNOWN-ISSUES.md`
+- Will be fixed in separate spec-lint issue
+
+**Infrastructure components**:
+- ✅ 6 golden test fixtures (5 working + 1 XFAIL)
+- ✅ tests/unit/run.sh with XFAIL support
 - ✅ scripts/check.sh integration (unit mode)
 - ✅ CI workflow integration (.github/workflows/spec-ci.yml)
-- ✅ All tests verify **intended failure reasons** (not just "something failed")
-- ✅ Positive test (exit 0) prevents "always-fail" false positives
-
-**Known limitation**:
-- ⚠️  spec-lint has critical bug: duplicate feat-id detection doesn't work
-- Documented in `tests/unit/spec-lint/KNOWN-ISSUES.md`
-- Test fixture `duplicate-feat-id-BROKEN` expects buggy behavior (exit 0)
-- Will be fixed in separate issue
 
 ---
 
@@ -38,8 +44,10 @@ Phase 2.0 Unit Test implementation is **complete and auditable**.
 nix develop -c bash scripts/check.sh unit
 ```
 
-**Actual Output** (at commit `b4cefdb`):
+**Actual Output** (at commit `ee80a4c`):
 ```
+🧪 Running spec-lint unit tests
+
 Testing: broken-ref
   ✅ Exit code: 1
   ✅ Error tag: 'Broken reference' found
@@ -47,8 +55,10 @@ Testing: circular-deps
   ✅ Exit code: 1
   ✅ Error tag: 'circular deps' found
 Testing: duplicate-feat-id-BROKEN
+  ⚠️  XFAIL (known issue): spec-lint bug: duplicate feat-id detection broken (evalFeaturesViaCue uses map[string]string, duplicates overwrite)
   ✅ Exit code: 0
   ✅ Error tag: 'ALL CHECKS PASSED' found
+  📋 XFAIL confirmed (still failing as expected)
 Testing: empty-spec
   ✅ Exit code: 1
   ✅ Error tag: 'No feat-ids extracted' found
@@ -61,69 +71,79 @@ Testing: valid-spec
 
 ====================
 Test Summary:
-  PASS: 6
-  FAIL: 0
-  SKIP: 0
+  PASS:  5
+  FAIL:  0
+  XFAIL: 1 (known issues, not counted as failure)
+  SKIP:  0
   TOTAL: 6
 ====================
-✅ All tests passed
+✅ All tests passed (with 1 known issue(s) documented)
 ✅ Phase 2 unit PASS
 EXIT=0
 ```
 
 **Verification**:
-- All 6 golden fixtures executed: PASS ✅
-- Exit code verification: PASS ✅
-- Error tag verification: PASS ✅ (each test checks **specific** error message)
-- Final exit code: 0 ✅
+- 5 tests PASS (working checks): ✅
+- 1 test XFAIL (known spec-lint bug): ✅ (documented, not hidden)
+- Exit code 0 (XFAIL doesn't fail CI): ✅
+- Error tags match intended checks: ✅
 - Entry point: check.sh unit ✅
 
 ---
 
 ## Golden Test Fixtures (Detailed)
 
-### 1. broken-ref ✅
+### Working Tests (5/6)
+
+#### 1. broken-ref ✅
 **Purpose**: Detect undefined URN references  
 **Mode**: slow  
-**Expected**: exit 1, stderr contains "Broken reference"  
-**Result**: ✅ PASS - correctly detects `urn:feat:nonexistent`
+**Expected**: exit 1, "Broken reference"  
+**Status**: PASS - correctly detects `urn:feat:nonexistent`
 
-### 2. circular-deps ✅
+#### 2. circular-deps ✅
 **Purpose**: Detect circular dependency chains  
 **Mode**: slow  
-**Expected**: exit 1, stderr contains "circular deps"  
-**Result**: ✅ PASS - correctly detects A→B→A cycle
+**Expected**: exit 1, "circular deps"  
+**Status**: PASS - correctly detects A→B→A cycle
 
-### 3. duplicate-feat-id-BROKEN ⚠️
+#### 3. empty-spec ✅
+**Purpose**: Detect specs with no features  
+**Mode**: fast  
+**Expected**: exit 1, "No feat-ids extracted"  
+**Status**: PASS - correctly rejects empty spec/urn/feat/
+
+#### 4. invalid-slug ✅
+**Purpose**: Detect non-kebab-case slugs  
+**Mode**: fast  
+**Expected**: exit 1, "not in kebab-case"  
+**Status**: PASS - correctly rejects `Bad_Slug` (underscore)
+
+#### 5. valid-spec ✅
+**Purpose**: Positive test - ensure not always-fail  
+**Mode**: fast  
+**Expected**: exit 0, "ALL CHECKS PASSED"  
+**Status**: PASS - valid spec passes all checks
+
+### Known Issue (1/6 - XFAIL)
+
+#### 6. duplicate-feat-id-BROKEN ⚠️
 **Purpose**: DOCUMENTS spec-lint bug (duplicate detection broken)  
 **Mode**: fast  
-**Expected**: exit 0, stderr contains "ALL CHECKS PASSED" (bug behavior!)  
-**Result**: ✅ PASS - confirms bug still exists  
-**Note**: Renamed from `duplicate-feat-id` to signal intentional failure
+**Expected**: exit 0, "ALL CHECKS PASSED" (buggy behavior)  
+**Status**: XFAIL - confirms bug still exists  
+**XFAIL marker**: `duplicate-feat-id-BROKEN/XFAIL`
+
+**Why XFAIL, not PASS**:
+- Claiming "6/6 PASS" with broken duplicate detection = false security
+- XFAIL isolates known bugs from working tests
+- CI stays green, but no false confidence
 
 **Bug details**:
-- spec-lint's `evalFeaturesViaCue()` uses `map[string]string`
+- spec-lint's `evalFeaturesViaCue()` returns `map[string]string`
 - Duplicate IDs overwrite instead of accumulating
-- Should return `map[string][]string` and append
-- See `tests/unit/spec-lint/KNOWN-ISSUES.md` for full analysis
-
-### 4. empty-spec ✅
-**Purpose**: Detect specs with no features  
-**Mode**: fast (default)  
-**Expected**: exit 1, stderr contains "No feat-ids extracted"  
-**Result**: ✅ PASS - correctly rejects empty spec/urn/feat/
-
-### 5. invalid-slug ✅
-**Purpose**: Detect non-kebab-case slugs  
-**Mode**: fast (default)  
-**Expected**: exit 1, stderr contains "not in kebab-case"  
-**Result**: ✅ PASS - rejects `Bad_Slug` (underscore)
-
-### 6. valid-spec ✅ (NEW)
-**Purpose**: Positive test - ensure not always-fail  
-**Mode**: fast (default)  
-**Expected**: exit 0, stderr contains "ALL CHECKS PASSED"  
-**Result**: ✅ PASS - valid spec passes all checks
+- Fix: Change to `map[string][]string` and append
+- See `tests/unit/spec-lint/KNOWN-ISSUES.md`
 
 ---
 
@@ -131,49 +151,232 @@ EXIT=0
 
 ### Bug 1: run.sh Terminated After First Test
 
-**Issue**: Script exited after processing first test, never ran remaining 5  
-**Root Cause**: Bash arithmetic expression `((PASS++))` with `set -e`
+**Issue**: Script exited after first test, never ran remaining 5  
 
-**Technical explanation** (CORRECTED):
-- `((expression))` returns **exit status based on arithmetic result**
+**Root Cause** (PRECISE):
+- `((PASS++))` returns **exit status** based on arithmetic truth value
 - When `PASS=0`, `((PASS++))` evaluates to 0 (post-increment)
-- In bash arithmetic context, **0 is falsy** → exit status 1
-- With `set -e`, **exit status 1 causes script termination**
-- **Not** about the "value" being falsy, but the **exit code** from `(())`
+- In bash `(())`, **0 is arithmetic false** → exit status 1
+- With `set -e`, **exit status 1 terminates script**
+- Key: It's the **exit status from (())**, not the variable value
 
 **Fix**:
 ```bash
 # Before (broken):
-((PASS++))          # Returns exit 1 when PASS=0, kills script
+((PASS++))          # Exit status 1 when PASS=0
 
 # After (fixed):
-PASS=$((PASS + 1))  # Always returns exit 0, safe with set -e
+PASS=$((PASS + 1))  # Assignment always returns exit 0
 ```
 
-**Evidence**: Commit `60cd683` with full test output showing 5→5 tests
+**Evidence**: Commit `60cd683`
 
 ---
 
 ### Bug 2: Missing Positive Test
 
-**Issue**: All original tests expected failure (exit 1)  
-**Impact**: If spec-lint broke to "always fail", tests would still pass  
-**Fix**: Added `valid-spec` fixture expecting exit 0
+**Issue**: All tests expected failure (exit 1)  
+**Impact**: "Always-fail" implementation would pass tests  
+**Fix**: Added `valid-spec` (exit 0)  
+**Evidence**: Commit `b4cefdb`
 
 ---
 
 ### Bug 3: Wrong Error Tags (3/5 tests)
 
-**Issue** (identified by user review):
-- `duplicate-feat-id`: Expected "No feat-ids extracted", but SHOULD test dedup logic
-- `invalid-slug`: Expected "No feat-ids extracted", but SHOULD test kebab-case
-- These were **testing CUE import failures**, not the intended checks
+**Issue** (user review):
+- Tests checked "No feat-ids extracted" (generic CUE failure)
+- Not checking **intended validation** (duplicate, slug format)
 
 **Fix**:
-1. Fixed CUE import paths (`test.example/...` instead of `github.com/...`)
-2. Updated expected stderr tags to match **actual check being tested**:
-   - `invalid-slug`: "not in kebab-case" ✅
-   - `duplicate-feat-id`: Discovered spec-lint bug → documented as BROKEN
+- `invalid-slug`: Now checks "not in kebab-case" ✅
+- `duplicate-feat-id`: Discovered spec-lint bug → XFAIL ✅
+- `empty-spec`: "No feat-ids extracted" is correct ✅
+
+**Evidence**: Commit `b4cefdb`
+
+---
+
+### Bug 4: False Security from Broken Check in PASS Count
+
+**Issue** (user review):
+- Counting `duplicate-feat-id-BROKEN` as PASS (6/6) creates false confidence
+- "Phase 2.0 COMPLETE" while duplicate detection doesn't work = contradiction
+
+**Fix**: XFAIL support (commit `ee80a4c`)
+- `duplicate-feat-id-BROKEN` now XFAIL (not PASS)
+- Summary: PASS=5, XFAIL=1
+- Wording: "TEST INFRASTRUCTURE COMPLETE" (not "all checks working")
+
+---
+
+## XFAIL System (Expected Failures)
+
+**Purpose**: Document known issues without failing CI or hiding bugs
+
+**How it works**:
+1. Test directory contains `XFAIL` file with reason
+2. run.sh detects marker, categorizes as XFAIL
+3. XFAIL count shown separately in summary
+4. Exit code 0 (doesn't fail CI)
+5. When bug fixed, delete `XFAIL` file → auto-promotes to PASS
+
+**Example**:
+```
+duplicate-feat-id-BROKEN/XFAIL:
+"spec-lint bug: duplicate feat-id detection broken 
+(evalFeaturesViaCue uses map[string]string, duplicates overwrite)"
+```
+
+**Benefits**:
+- ✅ CI stays green
+- ✅ No false security ("5/6 working" is honest)
+- ✅ Bugs explicitly documented
+- ✅ Zero code change needed when bug fixed (just rm XFAIL)
+
+---
+
+## Test Coverage Status
+
+| Check Type         | Working? | Test Fixture       | Error Tag Verified    | Status |
+|--------------------|----------|--------------------|-----------------------|--------|
+| Broken refs        | ✅ YES    | `broken-ref`       | "Broken reference"    | PASS   |
+| Circular deps      | ✅ YES    | `circular-deps`    | "circular deps"       | PASS   |
+| Duplicate feat-id  | ❌ NO     | `duplicate-feat-id-BROKEN` | N/A (spec-lint bug)   | **XFAIL** |
+| Invalid slug       | ✅ YES    | `invalid-slug`     | "not in kebab-case"   | PASS   |
+| Empty spec         | ✅ YES    | `empty-spec`       | "No feat-ids extracted" | PASS |
+| Valid spec (positive) | ✅ YES | `valid-spec`       | "ALL CHECKS PASSED"   | PASS   |
+
+**Summary**: 5 PASS, 1 XFAIL (spec-lint bug documented)
+
+---
+
+## Audit Response (User Critique #2)
+
+**User's assessment**: "未完璧（95点）" - **100% correct**.
+
+### Issues Identified
+
+1. ❌ **SSOT二重化** ("b4cefdb" と "07ef8b5" 併記)
+   - **Fixed**: Single SSOT = `ee80a4c` (HEAD)
+
+2. ❌ **duplicate-feat-id を PASS 扱い** (6/6 PASS)
+   - 「偽陽性排除」主張と矛盾
+   - **Fixed**: XFAIL system → 5 PASS + 1 XFAIL
+
+3. ❌ **「全テストが狙い通りの失敗理由を検証」は不正確**
+   - duplicate は「失敗すべきが成功」= 狙いと逆
+   - **Fixed**: Wording changed to "5/6 working checks verified"
+
+### What Changed
+
+**Before** (07ef8b5):
+```
+SSOT: "b4cefdb または 07ef8b5" ← 二重化（矛盾）
+Test Summary: PASS: 6/6        ← 偽の安心
+Status: "PHASE 2.0 COMPLETE"   ← duplicate壊れてるのに完璧？
+```
+
+**After** (ee80a4c):
+```
+SSOT: ee80a4c (HEAD, 単一)      ← 一本化
+Test Summary: PASS: 5, XFAIL: 1 ← 正直な状態
+Status: "TEST INFRASTRUCTURE COMPLETE" ← 正確
+```
+
+---
+
+## Definition of Done (FINAL)
+
+- [x] 6 golden test fixtures created
+- [x] 5/6 checks verified working
+- [x] 1/6 documented as XFAIL (spec-lint bug, not hidden)
+- [x] Each working test verifies **specific intended behavior**
+- [x] Positive test prevents "always-fail" false positives
+- [x] XFAIL system prevents false security from broken checks
+- [x] Test runner: "run all to completion" + XFAIL support
+- [x] Bash arithmetic bug fixed
+- [x] Integration with scripts/check.sh (SSOT entry point)
+- [x] CI workflow updated
+- [x] All working tests pass (5/5)
+- [x] Exit code 0 (XFAIL doesn't break CI)
+- [x] spec-lint bug documented (KNOWN-ISSUES.md + XFAIL marker)
+- [x] Single SSOT (ee80a4c, no double-counting)
+- [x] Accurate status wording (infrastructure complete, not all checks working)
+- [x] Zero contradictions
+
+---
+
+## Lessons Learned
+
+### 1. SSOT Must Be Single
+
+**Bad**:
+```
+SSOT: b4cefdb (this document)
+Or: 07ef8b5 (certification commit)
+```
+→ Contradiction, unclear audit baseline
+
+**Good**:
+```
+SSOT: ee80a4c (HEAD, all code+evidence in single commit)
+```
+→ Single source of truth, zero ambiguity
+
+---
+
+### 2. XFAIL > Hiding Bugs in PASS Count
+
+**Bad**:
+```
+PASS: 6/6 ← Includes broken duplicate check
+Status: "COMPLETE" ← False sense of security
+```
+
+**Good**:
+```
+PASS: 5/6, XFAIL: 1 (spec-lint bug)
+Status: "Infrastructure complete, 1 known issue"
+```
+
+**Why**:
+- Honesty > green metrics
+- Bug visibility > hiding in PASS count
+- Audit integrity > cosmetic "completion"
+
+---
+
+### 3. Wording Must Match Reality
+
+**Bad**:
+- "All checks verified" (when 1 is broken)
+- "Offensively complete" (when duplicate detection doesn't work)
+- "Zero false positives" (while counting broken check as PASS)
+
+**Good**:
+- "5/6 checks verified"
+- "Test infrastructure complete"
+- "1 known issue documented as XFAIL"
+
+---
+
+### 4. Bugs Must Never Be Hidden
+
+**Principle**: バグは一切隠さない
+
+**Application**:
+- Don't count broken checks as PASS
+- Use XFAIL for known issues
+- Document root cause (KNOWN-ISSUES.md)
+- Show bug explicitly in test output
+
+**Result**:
+```
+Testing: duplicate-feat-id-BROKEN
+  ⚠️  XFAIL (known issue): spec-lint bug: duplicate feat-id detection broken...
+  📋 XFAIL confirmed (still failing as expected)
+```
 
 ---
 
@@ -183,206 +386,73 @@ PASS=$((PASS + 1))  # Always returns exit 0, safe with set -e
 - **File**: `scripts/check.sh`
 - **Mode**: `unit`
 - **Command**: `bash tests/unit/run.sh`
-- **Principle**: All checks go through check.sh (no direct calls)
 
 ### 2. CI Workflow
 - **File**: `.github/workflows/spec-ci.yml`
 - **Job**: `unit`
 - **Trigger**: PR events, non-main pushes
 - **Command**: `nix develop -c bash scripts/check.sh unit`
+- **Exit**: 0 (XFAIL doesn't fail build)
 
 ### 3. Test Runner
 - **File**: `tests/unit/run.sh`
-- **Design**: Runs ALL tests to completion, never exits early
 - **Features**:
-  - Explicit arithmetic (`i=$((i+1))`) instead of `((i++))`
-  - `mktemp` for log files (no /tmp collisions)
-  - Disables `set -e` around risky operations
-  - Always shows summary before exit
-
----
-
-## Test Coverage Status
-
-| Check Type         | Working? | Test Fixture       | Error Tag Verified    |
-|--------------------|----------|--------------------|----------------------|
-| Broken refs        | ✅ YES    | `broken-ref`       | "Broken reference"   |
-| Circular deps      | ✅ YES    | `circular-deps`    | "circular deps"      |
-| Duplicate feat-id  | ❌ NO     | `duplicate-feat-id-BROKEN` | **spec-lint bug**    |
-| Invalid slug       | ✅ YES    | `invalid-slug`     | "not in kebab-case"  |
-| Empty spec         | ✅ YES    | `empty-spec`       | "No feat-ids extracted" |
-| Valid spec (positive) | ✅ YES | `valid-spec`       | "ALL CHECKS PASSED"  |
-
-**Status**: 5/6 checks verified, 1/6 blocked by spec-lint bug (documented)
-
----
-
-## Audit Response (User Critique)
-
-**User's assessment**: "未完璧 (imperfect)" - **100% correct**.
-
-### Issues Identified by User
-
-1. **❌ 3/5 tests had wrong error tags**
-   - All showed "No feat-ids extracted" (CUE import failure)
-   - Not testing the INTENDED check (dedup, slug validation)
-   - **Fixed**: Updated import paths, verified correct error messages
-
-2. **❌ No positive test (exit 0)**
-   - Could have false positive if spec-lint always fails
-   - **Fixed**: Added `valid-spec` fixture
-
-3. **⚠️  SSOT記述が二重** (9c5ffbe vs 7d6e69f)
-   - Audit baseline unclear
-   - **Fixed**: Single SSOT = `b4cefdb` (this document's commit)
-
-### What Changed
-
-**Before** (7d6e69f):
-```
-duplicate-feat-id: "No feat-ids extracted" ← WRONG
-invalid-slug: "No feat-ids extracted"      ← WRONG  
-empty-spec: "No feat-ids extracted"        ← Coincidentally correct
-Total: 5 tests, 0 positive tests
-```
-
-**After** (b4cefdb):
-```
-duplicate-feat-id-BROKEN: "ALL CHECKS PASSED" ← Documents spec-lint bug
-invalid-slug: "not in kebab-case"              ← CORRECT
-empty-spec: "No feat-ids extracted"            ← CORRECT
-valid-spec: "ALL CHECKS PASSED"                ← NEW positive test
-Total: 6 tests (5 negative + 1 positive)
-```
-
----
-
-## Definition of Done (CORRECTED)
-
-- [x] 6 golden test fixtures created (5 negative + 1 positive)
-- [x] Each test verifies **specific intended failure reason**
-- [x] Positive test prevents "always-fail" false positives
-- [x] Test runner implements "run all to completion" design
-- [x] Bash arithmetic bug fixed (`((i++))` → `i=$((i+1))`)
-- [x] Integration with scripts/check.sh (SSOT entry point)
-- [x] CI workflow updated (.github/workflows/spec-ci.yml)
-- [x] All tests pass (6/6 PASS)
-- [x] Exit code 0 on success
-- [x] spec-lint duplicate bug documented (KNOWN-ISSUES.md)
-- [x] Certification document with corrected evidence
-
----
-
-## Known Limitations
-
-### spec-lint Duplicate Detection Bug
-
-**Status**: Active bug, not fixed in this phase  
-**Impact**: Cannot test duplicate feat-id detection  
-**Workaround**: `duplicate-feat-id-BROKEN` fixture documents bug  
-**Next steps**: File separate issue to fix spec-lint, then update test
-
-See `tests/unit/spec-lint/KNOWN-ISSUES.md` for:
-- Technical root cause analysis
-- Evidence of bug (CUE shows 2 features, spec-lint reports 1)
-- Proposed fix (change return type to `map[string][]string`)
-
----
-
-## Lessons Learned
-
-### 1. Bash Arithmetic with set -e (CORRECTED)
-
-**Problem**: `((i++))` causes script exit when i=0  
-**Mechanism**:
-- `((expr))` returns exit code based on **arithmetic truth value**
-- `((PASS++))` when PASS=0 evaluates to 0 (falsy) → **exit status 1**
-- With `set -e`, non-zero exit terminates script
-- **Key**: It's the **exit status**, not the "value" that matters
-
-**Solution**: 
-```bash
-i=$((i + 1))   # Assignment always succeeds (exit 0)
-# OR
-((i++)) || true  # Explicitly ignore exit status
-```
-
-### 2. Test Error Tags Must Match Intent
-
-**Principle**: "狙い通りの失敗 (failure for intended reason)"
-
-**Bad**:
-```
-Test: invalid-slug
-Expected: "No feat-ids extracted"  ← Generic extraction failure
-Actual: "No feat-ids extracted"    ← Could be ANY CUE error
-Result: PASS ← False positive!
-```
-
-**Good**:
-```
-Test: invalid-slug
-Expected: "not in kebab-case"      ← Specific check
-Actual: "not in kebab-case"        ← Validates slug logic works
-Result: PASS ← True positive!
-```
-
-### 3. Positive Tests Are Mandatory
-
-**Without positive test**:
-```go
-// Broken implementation
-func CheckSpec() int {
-    return 1  // Always fail
-}
-// All negative tests: PASS ← Disaster!
-```
-
-**With positive test**:
-```
-valid-spec: expects exit 0
-Broken impl returns 1
-Test: FAIL ← Catches the bug!
-```
-
-### 4. Document Known Bugs Explicitly
-
-**Bad**: Hide broken test, pretend it works  
-**Good**: 
-- Rename test to `...-BROKEN`
-- Expect current (buggy) behavior
-- Document root cause in KNOWN-ISSUES.md
-- Maintain audit trail
+  - XFAIL support (known issues don't fail CI)
+  - Explicit arithmetic (`i=$((i+1))`)
+  - `mktemp` for log files
+  - Always shows summary
 
 ---
 
 ## Certification
 
-I certify that at commit `b4cefdb`:
-- All 6 unit tests execute successfully
-- Each test verifies **specific intended behavior**
-- spec-lint duplicate bug is **documented, not hidden**
+I certify that at commit `ee80a4c` (HEAD):
+- 5/6 checks verified working
+- 1/6 documented as XFAIL (spec-lint bug, explicitly shown)
+- spec-lint bug **not hidden**, fully documented
+- Single SSOT (ee80a4c), zero ambiguity
+- Accurate wording ("infrastructure complete", not "all checks working")
 - Exit code 0 achieved
-- All evidence is reproducible
-- No contradictions exist
+- All evidence reproducible
+- **Zero contradictions**
 - Full audit trail maintained
-- User critique addressed completely
+- User critique fully addressed
 
 **Certified by**: Claude Code (OpenCode)  
 **Date**: 2025-12-29  
-**SSOT Commit**: `b4cefdb` (single source of truth for all code + evidence)
+**SSOT**: `ee80a4c` (HEAD, single source of truth)
 
 ---
 
-## Next Phase
+## Next Steps
 
-**Phase 2.1** (Future):
-- Fix spec-lint duplicate detection bug
-- Update `duplicate-feat-id-BROKEN` → `duplicate-feat-id`
-- Add more edge case fixtures (e.g., slug with numbers, hyphen positions)
-- Add positive tests for slow mode (valid refs, valid circular check)
+### Immediate (Phase 2.1)
+1. **Fix spec-lint duplicate detection bug**
+   - Change `evalFeaturesViaCue()` return type to `map[string][]string`
+   - Append filepaths instead of overwriting
+2. **Remove XFAIL marker** from `duplicate-feat-id-BROKEN`
+3. **Rename** `duplicate-feat-id-BROKEN` → `duplicate-feat-id`
+4. **Update expected values**:
+   - `expected-exit-code`: 0 → 1
+   - `expected-stderr-contains`: "ALL CHECKS PASSED" → "duplicate feat-id" or similar
+5. **Verify**: 6/6 PASS (no XFAIL)
 
-**Phase 1.5** (Still Pending):
-- Apply GitHub branch protection settings
-- Verify enforcement actually prevents bypasses
+### Future (Phase 1.5 - Still Pending)
+- Apply GitHub branch protection settings (docs exist, not applied)
+- Verify enforcement prevents bypasses
 - Document evidence of applied settings
+
+---
+
+## Commit History
+
+```
+* ee80a4c feat(test): XFAIL サポート追加 - 既知バグを緑ビルドから分離
+* 07ef8b5 docs(ci): Phase 2.0 認証書修正 - SSOT一本化+バグ文書化+ユーザー指摘対応
+* b4cefdb fix(test): Phase 2.0 fixture修正 - 狙い通りの失敗+正のテスト追加
+* 7d6e69f docs(ci): Phase 2.0 完了認証 - 5つのunit tests成功 (初版、不完全)
+* 9c5ffbe feat(ci): Phase 2 unit test統合 - check.sh + CI workflow
+* 60cd683 fix(test): run.sh set -e バグ修正 - 全5テスト実行成功
+```
+
+**Audit SSOT**: `ee80a4c` (single commit, all code + evidence + certification)
