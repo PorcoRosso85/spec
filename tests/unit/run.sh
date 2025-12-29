@@ -1,15 +1,13 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Unit test runner for spec-lint
-# Usage: bash tests/unit/run.sh [test-dir]
+# Unit test runner for spec-lint golden fixtures
+# Usage: nix develop -c bash tests/unit/run.sh
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 TEST_DIR="${REPO_ROOT}/tests/unit/spec-lint/golden"
 
 echo "🧪 Running spec-lint unit tests"
-echo "Repository root: $REPO_ROOT"
-echo "Test directory: $TEST_DIR"
 echo ""
 
 PASS=0
@@ -22,54 +20,64 @@ run_test() {
     echo "Testing: $test_name"
     
     # Check test structure
-    if [[ ! -d "$test_path/spec" ]]; then
-        echo "  ❌ SKIP: No spec/ directory"
-        return
-    fi
-    
-    if [[ ! -f "$test_path/cue.mod/module.cue" ]]; then
-        echo "  ❌ SKIP: No cue.mod/module.cue"
+    if [[ ! -d "$test_path/spec" ]] || [[ ! -f "$test_path/cue.mod/module.cue" ]]; then
+        echo "  ⚠️  SKIP: Missing spec/ or cue.mod/module.cue"
         return
     fi
     
     # Build spec-lint if needed
     if [[ ! -f "$REPO_ROOT/tools/spec-lint/spec-lint" ]]; then
         echo "  Building spec-lint..."
-        cd "$REPO_ROOT/tools/spec-lint"
-        go build -mod=readonly -o spec-lint cmd/main.go
-        cd "$REPO_ROOT"
+        (cd "$REPO_ROOT/tools/spec-lint" && go build -mod=readonly -o spec-lint cmd/main.go)
     fi
     
-    # Run spec-lint from test directory
-    cd "$test_path"
+    # Determine test mode (default: fast)
+    local mode="fast"
+    [[ -f "$test_path/test-mode" ]] && mode=$(cat "$test_path/test-mode")
+    
+    # Run spec-lint directly (spec-lint validates repo root)
+    local log_file="/tmp/test-${mode}-${test_name}.log"
     set +e
-    "$REPO_ROOT/tools/spec-lint/spec-lint.sh" . --mode fast > /tmp/test-fast-$test_name.log 2>&1
+    "$REPO_ROOT/tools/spec-lint/spec-lint.sh" "$test_path" --mode "$mode" > "$log_file" 2>&1
     local exit_code=$?
     set -e
-    cd "$REPO_ROOT"
     
-    # Check expected exit code
+    local test_passed=true
+    
+    # Check exit code
     if [[ -f "$test_path/expected-exit-code" ]]; then
         local expected_exit=$(cat "$test_path/expected-exit-code")
         if [[ "$exit_code" == "$expected_exit" ]]; then
-            echo "  ✅ Exit code: $exit_code (expected: $expected_exit)"
-            ((PASS++))
+            echo "  ✅ Exit code: $exit_code"
         else
             echo "  ❌ Exit code: $exit_code (expected: $expected_exit)"
-            echo "     Log: /tmp/test-fast-$test_name.log"
-            ((FAIL++))
+            test_passed=false
         fi
+    fi
+    
+    # Check stderr contains expected error tag
+    if [[ -f "$test_path/expected-stderr-contains" ]]; then
+        local expected_tag=$(cat "$test_path/expected-stderr-contains")
+        if grep -qi "$expected_tag" "$log_file"; then
+            echo "  ✅ Error tag: '$expected_tag' found"
+        else
+            echo "  ❌ Error tag: '$expected_tag' NOT found"
+            echo "     Log: $log_file"
+            test_passed=false
+        fi
+    fi
+    
+    if $test_passed; then
+        ((PASS++))
     else
-        echo "  ⚠️  No expected-exit-code file"
+        ((FAIL++))
     fi
 }
 
-# Find all golden test directories
+# Find and run all golden tests
 if [[ -d "$TEST_DIR" ]]; then
     for test_path in "$TEST_DIR"/*; do
-        if [[ -d "$test_path" ]]; then
-            run_test "$test_path"
-        fi
+        [[ -d "$test_path" ]] && run_test "$test_path"
     done
 else
     echo "❌ Test directory not found: $TEST_DIR"
@@ -83,6 +91,4 @@ echo "  PASS: $PASS"
 echo "  FAIL: $FAIL"
 echo "===================="
 
-if [[ $FAIL -gt 0 ]]; then
-    exit 1
-fi
+[[ $FAIL -gt 0 ]] && exit 1 || exit 0
