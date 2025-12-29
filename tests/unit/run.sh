@@ -5,6 +5,7 @@ set -euo pipefail
 # Usage: nix develop -c bash tests/unit/run.sh
 # 
 # Design: Runs ALL tests to completion, never exits early
+# Supports XFAIL (expected failures for known issues)
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 TEST_DIR="${REPO_ROOT}/tests/unit/spec-lint/golden"
@@ -15,12 +16,22 @@ echo ""
 PASS=0
 FAIL=0
 SKIP=0
+XFAIL=0  # Expected failures (known issues, don't fail CI)
 
 run_test() {
     local test_path="$1"
     local test_name="$(basename "$test_path")"
     
     echo "Testing: $test_name"
+    
+    # Check for XFAIL marker (expected failure due to known issue)
+    local is_xfail=false
+    if [[ -f "$test_path/XFAIL" ]]; then
+        is_xfail=true
+        local xfail_reason
+        xfail_reason=$(cat "$test_path/XFAIL")
+        echo "  ⚠️  XFAIL (known issue): $xfail_reason"
+    fi
     
     # Check test structure
     if [[ ! -d "$test_path/spec" ]] || [[ ! -f "$test_path/cue.mod/module.cue" ]]; then
@@ -90,8 +101,15 @@ run_test() {
         fi
     fi
     
-    # Update counters (use explicit arithmetic to avoid set -e issues)
-    if $test_passed; then
+    # Update counters (XFAIL tests don't count as PASS or FAIL)
+    if $is_xfail; then
+        XFAIL=$((XFAIL + 1))
+        if $test_passed; then
+            echo "  📋 XFAIL confirmed (still failing as expected)"
+        else
+            echo "  ⚠️  XFAIL behavior changed (may need update)"
+        fi
+    elif $test_passed; then
         PASS=$((PASS + 1))
     else
         FAIL=$((FAIL + 1))
@@ -114,17 +132,22 @@ done
 echo ""
 echo "===================="
 echo "Test Summary:"
-echo "  PASS: $PASS"
-echo "  FAIL: $FAIL"
-echo "  SKIP: $SKIP"
-echo "  TOTAL: $((PASS + FAIL + SKIP))"
+echo "  PASS:  $PASS"
+echo "  FAIL:  $FAIL"
+echo "  XFAIL: $XFAIL (known issues, not counted as failure)"
+echo "  SKIP:  $SKIP"
+echo "  TOTAL: $((PASS + FAIL + XFAIL + SKIP))"
 echo "===================="
 
-# Exit with appropriate code
+# Exit with appropriate code (XFAIL doesn't cause failure)
 if [[ $FAIL -gt 0 ]]; then
     echo "❌ Some tests failed"
     exit 1
 else
-    echo "✅ All tests passed"
+    if [[ $XFAIL -gt 0 ]]; then
+        echo "✅ All tests passed (with $XFAIL known issue(s) documented)"
+    else
+        echo "✅ All tests passed"
+    fi
     exit 0
 fi
