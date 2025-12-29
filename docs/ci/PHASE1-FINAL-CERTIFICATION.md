@@ -2,7 +2,7 @@
 
 **Date**: 2025-12-29  
 **Status**: ✅ **PHASE 1 COMPLETE**  
-**Final Auditable SSOT**: `3aa1c52` (HEAD commit containing this file)
+**Final Auditable SSOT**: `7869491` (HEAD commit with final corrections)
 
 ---
 
@@ -133,7 +133,7 @@ $ echo $?
 ## Rule Compliance Checklist
 
 ### Rule 1: SSOT Fixed to HEAD
-- [x] SSOT = `8cefcef` (latest commit)
+- [x] SSOT = `7869491` (latest commit after corrections)
 - [x] Single SSOT declared (no multiple "final" versions)
 - [x] Previous commits listed as context only (not SSOT)
 
@@ -192,16 +192,18 @@ $ echo $?
 
 **Context commits** (for reference only):
 ```
-3aa1c52 docs: 10ルール完全準拠の最終認定書 + DoD更新 ← SSOT (HEAD)
+7869491 fix: 3つの最小矛盾点を完全解決 ← SSOT (HEAD, Final)
+3aa1c52 docs: 10ルール完全準拠の最終認定書 + DoD更新
 8cefcef docs: SSOT commit unified to ec1b67f
 4e95529 docs: add CORRECTIONS-APPLIED.md
 ec1b67f fix: correct 4 矛盾点 in Phase 1 completion claims
 ```
 
-**Why 3aa1c52 is SSOT**:
-- Contains this certification file
+**Why 7869491 is SSOT**:
+- Contains final corrections (3つの最小矛盾点解決)
 - Latest commit (HEAD) = authoritative per Rule 1
-- Rule 1: "SSOT is always HEAD when report is finalized"
+- Rule 1: "SSOT = always current HEAD commit when report is complete"
+- Also satisfies Rule 10: "Final Declaration Format with current HEAD"
 
 ---
 
