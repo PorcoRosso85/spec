@@ -238,4 +238,19 @@ Phase 2 candidates:
 **Production Ready**: YES  
 **Date**: 2025-12-29
 
+---
+
+## Important: SSOT Reference Rule
+
+Per **Rule 1**, SSOT is always "the current HEAD commit when this certification is finalized".
+
+If you are reading this in the future:
+1. Check current HEAD: `git log --oneline -1`
+2. If HEAD differs from SSOT stated above, use **current HEAD as authoritative**
+3. Verify: `git show <HEAD> -- docs/ci/PHASE1-FINAL-CERTIFICATION.md`
+
+This prevents "SSOT drift" where older reports reference stale commits.
+
+---
+
 **FINAL STATUS**: ✅ **PHASE 1 COMPLETE (矛盾ゼロ、全テストPASS)**
