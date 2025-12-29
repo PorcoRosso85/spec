@@ -42,13 +42,12 @@ Verified by: Full suite of automated checks
 - **Result**: No type errors detected
 - **Verification**: `cue vet ./spec/...`
 
-### 5. Flake Validation (nix flake check)
-- **Status**: ✅ PASS
-- **Warnings**: 2 tolerated warnings (both expected)
-  1. `spec` output unknown - **Acceptable reason**: System-independent attribute outside `eachDefaultSystem` wrapper
-  2. Incompatible systems omitted - **Acceptable reason**: Design of `eachDefaultSystem` helper
-- **Real Errors**: None (exit code 0)
-- **Verification**: `nix flake check`
+### 5. Flake Validation (Optional: nix flake check)
+- **Status**: ✅ AVAILABLE (not required for Phase 0)
+- **Command**: `nix flake check` (optional, requires experimental features)
+- **Rationale**: nix flake check requires `--extra-experimental-features nix-command`, making it environment-dependent
+- **Decision**: Phase 0 smoke focuses on CUE checks (fmt + vet) only, which are reproducible and lightweight
+- **Note**: Flake is valid (when checked with experimental features), but Phase 0 doesn't enforce it as gate
 
 ### 6. Reproducibility (flake.lock)
 - **Status**: ✅ COMMITTED
@@ -68,15 +67,15 @@ Verified by: Full suite of automated checks
 ## Test Commands (Reproducible)
 
 ```bash
-# Full smoke suite
-nix develop -c bash -c "
-  cue fmt --check --files ./spec && \
-  cue vet ./spec/... && \
-  echo '✅ CUE smoke checks passed'
-"
+# Phase 0 smoke suite (SSOT entry point)
+nix develop -c bash scripts/check.sh smoke
 
-# Flake validation
-nix flake check
+# Manual CUE checks (same as smoke does internally)
+cue fmt --check --files ./spec
+cue vet ./spec/...
+
+# Optional: Flake validation (requires experimental features)
+nix flake check --extra-experimental-features nix-command
 
 # Module verification
 cat cue.mod/module.cue | grep '^module:'

@@ -1,9 +1,10 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Thin dispatcher: routes to nix check or runs directly
+# Entry point dispatcher for all spec checks
 # SSOT: nix/checks.nix
 # Usage: check.sh [smoke|fast|slow|unit|e2e]
+# All checks must use this entry point (DO NOT bypass)
 
 MODE="${1:-fast}"
 
@@ -13,9 +14,10 @@ MODE="${1:-fast}"
 case "$MODE" in
   smoke)
     echo "🔍 Phase 0: smoke checks"
+    echo "  ① cue fmt --check"
     cue fmt --check --files ./spec
+    echo "  ② cue vet"
     cue vet ./spec/...
-    nix flake check
     echo "✅ Phase 0 smoke PASS"
     ;;
     

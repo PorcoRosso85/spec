@@ -39,7 +39,7 @@ slow  = fast + slow checks (comprehensive, main use)
 ### 2.1 SUCCESS Criteria (ALL must be TRUE)
 
 #### fast mode (PR gate)
-- [ ] **Smoke checks pass** (`cue fmt --check` + `cue vet` + `nix flake check`)
+- [ ] **Smoke checks pass** (`cue fmt --check` + `cue vet`)
 - [ ] **No duplicate feat-ids** (dedup check runs, count > 0, no errors)
 - [ ] **No duplicate env-ids** (dedup check runs, count > 0, no errors)
 - [ ] **All slugs are kebab-case** (validation runs, no errors)
@@ -84,7 +84,7 @@ slow  = fast + slow checks (comprehensive, main use)
 
 | Mode | Use Case | Time Budget | Pass Criterion | Next if Fail |
 |------|----------|-------------|----------------|-------------|
-| `smoke` | Baseline (both PR/main) | <10s | fmt + vet + nix check all pass, exit 0 | Stop (don't proceed to fast/slow) |
+| `smoke` | Baseline (both PR/main) | <10s | fmt + vet all pass, exit 0 | Stop (don't proceed to fast/slow) |
 | `fast` | PR gate | <30s | dedup + slug valid, featCount > 0, exit 0 | Pass PR |
 | `slow` | Main gate | <2min | fast + refs + cycle, exit 0 OR allowlist | Pass main or blocked |
 | `unit` | Future (Phase 2) | TBD | N/A (placeholder) | N/A |
@@ -123,15 +123,15 @@ spec-lint --mode slow
 
 ### 3.4 Extraction Guarantee (Critical)
 
-**CUE Eval → Fallback → Exit**
+**CUE Eval (canonical) → Fallback → Exit**
 
 ```
-1. Try CUE API (cuelang.org/go)
-   ✓ Success → use result
+1. Execute canonical `cue eval ./spec/... -e 'feature' --out json`
+   ✓ Success → parse NDJSON result
    ✗ Fail → log WARN, proceed to step 2
 
-2. Try regex fallback
-   ✓ Success → use result, log INFO "fallback used"
+2. Try regex fallback (safety net)
+   ✓ Success → use result, log INFO "regex fallback used"
    ✗ Fail → no data extracted
 
 3. Decision:
@@ -146,7 +146,7 @@ spec-lint --mode slow
 ```
 INFO: Mode: FAST (...)
 INFO: Scanning feat-ids...
-INFO: Extracted X feat-ids via [CUE API|regex fallback]  ← Must be explicit
+INFO: cue eval extracted X features via canonical approach  ← explicit method
 INFO: ✅ No feat-id duplicates (X unique)  ← X must be > 0 in passing case
 ```
 
@@ -213,15 +213,18 @@ INFO: ✅ No feat-id duplicates (X unique)  ← X must be > 0 in passing case
 
 ## 6. Known Limitations (Documented)
 
-### 6.1 CUE API Parsing
+### 6.1 Feature Extraction (Canonical Approach)
 
-**Current behavior:**
-- Uses cuelang.org/go v0.9.0
-- Falls back to regex if CUE API fails (undocumented edge case)
+**Current implementation:**
+- Go binary executes `cue eval ./spec/... -e 'feature' --out json` via exec.Command
+- Parses NDJSON output line-by-line
+- Canonical evaluation delegated to CUE CLI (system source of truth)
+- Falls back to regex if cue eval fails (safety net only)
 
-**Known gap:**
-- Nested CUE fields (e.g., `feature.deps` vs top-level `deps`) may have extraction differences
-- Fix: standardize extraction to **always use `cue eval` output** (not AST parsing)
+**Rationale:**
+- CUE CLI is canonical evaluator (used in all CI systems)
+- NDJSON format is deterministic and parseable
+- Go binary handles orchestration, not CUE parsing
 
 ### 6.2 Circular Dependency Detection
 
@@ -321,7 +324,7 @@ Then: **Phase 1 COMPLETE (binding claim)**
 - **DRY (Don't Repeat Yourself)**: Logic exists once
 - **KISS (Keep It Simple, Stupid)**: No unnecessary complexity
 - **slow ⊃ fast**: slow strictly includes all of fast (set theory)
-- **fallback**: regex parsing when CUE API fails
+- **fallback**: regex parsing when cue eval (canonical) fails (safety net only)
 - **featCount**: number of distinct feature-ids extracted (must be > 0 to verify dedup)
 
 ---

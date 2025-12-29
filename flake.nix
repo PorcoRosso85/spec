@@ -28,7 +28,7 @@
             echo "🚀 Spec repo development environment"
             echo ""
             echo "Phase 0 (Smoke):"
-            echo "  bash scripts/check.sh smoke  - cue fmt --check + cue vet + nix flake check"
+            echo "  bash scripts/check.sh smoke  - cue fmt --check + cue vet (Phase 0)"
             echo ""
             echo "Phase 1 (Reference Integrity):"
             echo "  bash scripts/check.sh fast   - fmt --check + vet + spec-lint dedup (PR)"

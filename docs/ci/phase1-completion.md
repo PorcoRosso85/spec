@@ -6,7 +6,7 @@
 
 ## Summary
 
-Phase 1 implements automated reference integrity checks for the spec repository. The implementation provides two modes (fast for PRs, slow for main) and is built entirely in Go using the CUE API, with optional kebab-case naming validation.
+Phase 1 implements automated reference integrity checks for the spec repository. The implementation provides two modes (fast for PRs, slow for main) and is built in Go with canonical CUE evaluation (via `cue eval`), including kebab-case naming validation.
 
 ## Completed Steps
 
@@ -33,10 +33,11 @@ Phase 1 implements automated reference integrity checks for the spec repository.
 
 ### Step 5: Go Implementation ✅
 - File: `tools/spec-lint/cmd/main.go`
-- Replaced bash implementation with Go using CUE API
+- Replaced bash implementation with Go binary
+- Executes canonical `cue eval ./spec/... -e 'feature' --out json`
 - Same CLI interface: `spec-lint.sh . --mode [fast|slow]`
 - Performance improvement via compiled binary
-- Fallback to regex parsing when CUE API fails
+- Fallback to regex parsing when cue eval fails (safety net)
 
 ### Step 6: Kebab-case Naming Validation ✅
 - Added slug validation to fast mode
@@ -105,9 +106,10 @@ Performance: ~50ms (full graph traversal)
 
 ## Key Features
 
-### 1. Dual Implementation
-- **CUE API parsing**: Structured, type-safe feature extraction
-- **Regex fallback**: Graceful degradation when CUE parsing fails
+### 1. Canonical Evaluation Approach
+- **Core**: Executes `cue eval ./spec/... -e 'feature' --out json` (canonical)
+- **Parsing**: Go binary parses NDJSON output
+- **Fallback**: Regex parsing only if cue eval fails (safety net)
 - **Performance**: Compiled Go binary vs bash (10x faster)
 
 ### 2. Circular Dependency Detection

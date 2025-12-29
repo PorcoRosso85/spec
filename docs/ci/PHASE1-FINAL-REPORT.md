@@ -437,8 +437,11 @@ These are **optional enhancements**, not required for Phase 1 completion.
 
 **Certification**: This report certifies that Phase 1 Reference Integrity is **complete, tested, and ready for production use**.
 
-**Final Auditable SSOT**: Commit `1011744` (docs: Add ACTUAL TEST LOGS to PHASE1-FINAL-REPORT)
+**SSOT Commit Hierarchy**:
+1. `1011744` - Evidence collection (docs: Add ACTUAL TEST LOGS to PHASE1-FINAL-REPORT) - **intermediate**
+2. `b9d7049` - Final SSOT unification (docs: Unify final commit reference to 1011744) - **AUTHORITATIVE**
 
-Signed: Complete evidence chain with actual test logs  
+**Auditable Chain**: `b9d7049` ← (references) ← `1011744` ← (contains all evidence)
+
 Date: 2025-12-29  
-Final Commit: `1011744` ✅ (UNIFIED SINGLE SOURCE OF TRUTH)
+Final Authoritative Commit: `b9d7049` ✅ (SINGLE SOURCE OF TRUTH for Phase 1)

@@ -45,10 +45,12 @@ Automated linting for spec repository - detects reference integrity issues.
 
 ### Go Binary (`cmd/main.go`)
 
-- Uses CUE Go API (`cuelang.org/go/cue`) to parse feature files
-- Falls back to regex parsing when CUE API fails
-- DFS-based cycle detection for circular dependency checking
-- Clean separation of concerns with dedicated methods for each check
+- **Implementation**: Go binary that orchestrates canonical CUE evaluation
+- **Core approach**: Executes `cue eval ./spec/... -e 'feature' --out json` via `exec.Command`
+- **Canonical extraction**: Delegates feature parsing to CUE CLI (canonical approach, not direct API usage)
+- **Fallback**: Regex parsing only when CUE eval fails (safety net)
+- **Algorithms**: DFS-based cycle detection, efficient dedup checking
+- **Design principle**: Leverage CUE's canonical evaluation, not reimplements parser
 
 ### Architecture
 
