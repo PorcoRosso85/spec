@@ -1,0 +1,94 @@
+# Check definitions for Phase 0/1
+# SSOT: What constitutes "fast", "slow", "unit", "e2e"
+
+{ pkgs, self }:
+
+{
+  # Phase 0: Baseline smoke checks
+  spec-smoke = pkgs.runCommand "spec-smoke"
+    {
+      buildInputs = with pkgs; [ cue git ];
+    }
+    ''
+      set -euo pipefail
+      cd ${self}
+      
+      echo "🔍 Phase 0: smoke checks"
+      
+      echo "  ① cue fmt --check"
+      ${pkgs.cue}/bin/cue fmt --check --files ./spec
+      
+      echo "  ② cue vet"
+      ${pkgs.cue}/bin/cue vet ./spec/...
+      
+      echo "  ③ nix flake check"
+      ${pkgs.nix}/bin/nix flake check
+      
+      echo "✅ Phase 0 smoke PASS"
+      mkdir -p $out && echo "ok" > $out/result
+    '';
+
+  # Phase 1 fast: feat-id/env-id dedup only (PR mode)
+  spec-fast = pkgs.runCommand "spec-fast"
+    {
+      buildInputs = with pkgs; [ cue git bash ];
+    }
+    ''
+      set -euo pipefail
+      cd ${self}
+      
+      echo "🏃 Phase 1: fast checks"
+      
+      echo "  ① spec-lint --mode fast"
+      bash ./tools/spec-lint/spec-lint.sh . --mode fast
+      
+      echo "  ② cue fmt --check"
+      ${pkgs.cue}/bin/cue fmt --check --files ./spec
+      
+      echo "  ③ cue vet"
+      ${pkgs.cue}/bin/cue vet ./spec/...
+      
+      echo "✅ Phase 1 fast PASS"
+      mkdir -p $out && echo "ok" > $out/result
+    '';
+
+  # Phase 1 slow: fast + broken refs (main push mode)
+  spec-slow = pkgs.runCommand "spec-slow"
+    {
+      buildInputs = with pkgs; [ cue git bash ];
+    }
+    ''
+      set -euo pipefail
+      cd ${self}
+      
+      echo "🐢 Phase 1: slow checks"
+      
+      echo "  ① spec-lint --mode slow"
+      bash ./tools/spec-lint/spec-lint.sh . --mode slow
+      
+      echo "  ② cue fmt --check"
+      ${pkgs.cue}/bin/cue fmt --check --files ./spec
+      
+      echo "  ③ cue vet"
+      ${pkgs.cue}/bin/cue vet ./spec/...
+      
+      echo "✅ Phase 1 slow PASS"
+      mkdir -p $out && echo "ok" > $out/result
+    '';
+
+  # Placeholder: unit tests (future)
+  spec-unit = pkgs.runCommand "spec-unit"
+    { }
+    ''
+      echo "ℹ️  spec:unit: placeholder (no tests yet)"
+      mkdir -p $out && echo "ok" > $out/result
+    '';
+
+  # Placeholder: e2e tests (future)
+  spec-e2e = pkgs.runCommand "spec-e2e"
+    { }
+    ''
+      echo "ℹ️  spec:e2e: placeholder (future nightly)"
+      mkdir -p $out && echo "ok" > $out/result
+    '';
+}

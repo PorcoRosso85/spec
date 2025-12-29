@@ -10,6 +10,7 @@
     flake-utils.lib.eachDefaultSystem (system:
       let
         pkgs = nixpkgs.legacyPackages.${system};
+        checks-defs = import ./nix/checks.nix { inherit pkgs self; };
       in
       {
         # 開発環境（CUEツールを含む）
@@ -64,6 +65,15 @@
         '';
 
         packages.default = self.packages.${system}.validate;
+
+        # Check definitions (SSOT for CI)
+        checks = {
+          spec-smoke = checks-defs.spec-smoke;
+          spec-fast = checks-defs.spec-fast;
+          spec-slow = checks-defs.spec-slow;
+          spec-unit = checks-defs.spec-unit;
+          spec-e2e = checks-defs.spec-e2e;
+        };
       }
     ) // {
       # **重要: spec/ を flake outputs として露出**

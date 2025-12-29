@@ -1,78 +1,50 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# spec check script - Phase 0/1 automated checks
-# SSOT: nix develop -c bash scripts/check.sh [fast|slow|smoke]
-# All checks are invoked through this single entry point
-# Usage: check.sh [fast|slow|smoke]
+# Thin dispatcher: routes to nix check or runs directly
+# SSOT: nix/checks.nix
+# Usage: check.sh [smoke|fast|slow|unit|e2e]
 
-PHASE="${1:-fast}"
+MODE="${1:-fast}"
 
-# Helper: invoke spec-lint with mode
-spec_lint() {
-  local mode="${1:-fast}"
-  ./tools/spec-lint/spec-lint.sh . --mode "$mode"
-}
+# For now: execute scripts directly (no nix check integration yet)
+# Future: can switch to `nix build .#checks...spec-${MODE}`
 
-# Helper: format and type check
-cue_check() {
-  echo "  ② cue fmt --check --files ./spec"
-  cue fmt --check --files ./spec
-  
-  echo "  ③ cue vet ./spec/..."
-  cue vet ./spec/...
-}
-
-case "$PHASE" in
+case "$MODE" in
   smoke)
-    echo "🔍 Phase 0: Running smoke checks (baseline)..."
-    echo ""
-    
-    echo "  ① cue fmt --check --files ./spec"
+    echo "🔍 Phase 0: smoke checks"
     cue fmt --check --files ./spec
-    
-    echo "  ② cue vet ./spec/..."
     cue vet ./spec/...
-    
-    echo "  ③ nix flake check"
     nix flake check
-    
-    echo ""
     echo "✅ Phase 0 smoke PASS"
     ;;
     
   fast)
-    echo "🏃 Phase 1: Running fast checks (PR mode)..."
-    echo ""
-    
-    echo "  ① spec-lint --mode fast (feat-id/env-id dedup only)"
-    spec_lint fast
-    
-    cue_check
-    
-    echo ""
+    echo "🏃 Phase 1: fast checks"
+    ./tools/spec-lint/spec-lint.sh . --mode fast
+    cue fmt --check --files ./spec
+    cue vet ./spec/...
     echo "✅ Phase 1 fast PASS"
     ;;
     
   slow)
-    echo "🐢 Phase 1: Running slow checks (main mode)..."
-    echo ""
-    
-    echo "  ① spec-lint --mode slow (refs + circular-deps)"
-    spec_lint slow
-    
-    cue_check
-    
-    echo ""
+    echo "🐢 Phase 1: slow checks"
+    ./tools/spec-lint/spec-lint.sh . --mode slow
+    cue fmt --check --files ./spec
+    cue vet ./spec/...
     echo "✅ Phase 1 slow PASS"
     ;;
     
+  unit)
+    echo "ℹ️  spec:unit: placeholder (no tests yet)"
+    ;;
+    
+  e2e)
+    echo "ℹ️  spec:e2e: placeholder (future nightly)"
+    ;;
+    
   *)
-    echo "Usage: check.sh [fast|slow|smoke]"
-    echo ""
-    echo "  fast   - Quick checks for PR (spec-lint dedup + fmt + vet)"
-    echo "  slow   - Full checks for main (spec-lint refs/circular + fmt + vet)"
-    echo "  smoke  - Phase 0 baseline (fmt + vet + flake check)"
+    echo "Usage: check.sh [smoke|fast|slow|unit|e2e]"
     exit 1
     ;;
 esac
