@@ -25,7 +25,7 @@ run_test() {
     # Check test structure
     if [[ ! -d "$test_path/spec" ]] || [[ ! -f "$test_path/cue.mod/module.cue" ]]; then
         echo "  ⚠️  SKIP: Missing spec/ or cue.mod/module.cue"
-        ((SKIP++))
+        SKIP=$((SKIP + 1))
         return 0  # Don't fail runner
     fi
     
@@ -34,7 +34,7 @@ run_test() {
         echo "  Building spec-lint..."
         (cd "$REPO_ROOT/tools/spec-lint" && go build -mod=readonly -o spec-lint cmd/main.go) || {
             echo "  ❌ SKIP: Build failed"
-            ((SKIP++))
+            SKIP=$((SKIP + 1))
             return 0
         }
     fi
@@ -90,11 +90,11 @@ run_test() {
         fi
     fi
     
-    # Update counters
+    # Update counters (use explicit arithmetic to avoid set -e issues)
     if $test_passed; then
-        ((PASS++))
+        PASS=$((PASS + 1))
     else
-        ((FAIL++))
+        FAIL=$((FAIL + 1))
     fi
     
     return 0  # Always continue to next test
