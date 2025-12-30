@@ -171,16 +171,14 @@ cd docs/catalog && cue vet ./...
 
 ---
 
-## Branch Protection
+## Validation
 
-After the first CI run, configure branch protection:
+All validation is performed locally via CUE contracts:
 
-1. GitHub Settings → Branches → Add rule for `main`
-2. Enable: "Require status checks to pass before merging"
-3. Select required checks:
-   - `catalog-validate`
-   - `adr-validate`
-   - `skeleton-guard`
-   - `traceability-gen`
+```bash
+nix develop -c bash scripts/check.sh smoke  # Basic checks
+nix develop -c bash scripts/check.sh fast   # Full CUE contract validation
+nix develop -c bash scripts/check.sh slow   # Same as fast (CUE vet)
+```
 
-See: [Branch Protection Setup](docs/ops/branch-protection.md)
+Contract SSOT: `spec/ci/contract/*.cue`

@@ -17,5 +17,8 @@ package schema
 		repoEnabled: bool
 	}
 
+	// deps: 依存する他の feature（オプション、循環依存検知用）
+	deps?: [...string]
+
 	// YAGNI: description, purpose, tags などは将来追加
 }

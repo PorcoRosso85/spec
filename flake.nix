@@ -10,6 +10,7 @@
     flake-utils.lib.eachDefaultSystem (system:
       let
         pkgs = nixpkgs.legacyPackages.${system};
+        checks-defs = import ./nix/checks.nix { inherit pkgs self; };
       in
       {
         # 開発環境（CUEツールを含む）
@@ -17,14 +18,25 @@
           buildInputs = with pkgs; [
             cue
             git
+            bash
+            go
           ];
 
           shellHook = ''
+            export PATH="$PWD/scripts:$PATH"
+            
             echo "🚀 Spec repo development environment"
             echo ""
-            echo "Available commands:"
+            echo "Phase 0 (Smoke):"
+            echo "  bash scripts/check.sh smoke  - cue fmt --check + cue vet"
+            echo ""
+            echo "Phase 1 (CUE Contract Validation):"
+            echo "  bash scripts/check.sh fast   - cue vet (CUE契約による全検証)"
+            echo "  bash scripts/check.sh slow   - cue vet (fast同等)"
+            echo ""
+            echo "Utilities:"
             echo "  cue eval ./spec/...           - Evaluate all spec definitions"
-            echo "  cue vet ./spec/ci/checks/...  - Validate CI checks"
+            echo "  cue vet ./spec/...            - Type validation"
             echo ""
             echo "Spec structure:"
             echo "  - schema/: Type definitions"
@@ -54,6 +66,15 @@
         '';
 
         packages.default = self.packages.${system}.validate;
+
+        # Check definitions (SSOT for CI)
+        checks = {
+          spec-smoke = checks-defs.spec-smoke;
+          spec-fast = checks-defs.spec-fast;
+          spec-slow = checks-defs.spec-slow;
+          spec-unit = checks-defs.spec-unit;
+          spec-e2e = checks-defs.spec-e2e;
+        };
       }
     ) // {
       # **重要: spec/ を flake outputs として露出**
