@@ -19,7 +19,7 @@ case "$MODE" in
   fast|slow)
     echo "🏃 Phase 1: $MODE checks"
     # ルールは全てCUE契約に存在、ここは実行のみ
-    # Note: spec/ci/fixtures/は除外（テスト用に意図的に不正なCUE）
+    # Note: spec/ci/fixtures/は除外（意図的PASS/FAIL検証はNix checks内で実施）
     cue vet ./spec/urn/... ./spec/schema/... ./spec/adapter/... ./spec/mapping/... ./spec/external/... ./spec/ci/checks/... ./spec/ci/contract/...
     echo "✅ $MODE PASS"
     ;;
