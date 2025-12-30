@@ -231,6 +231,13 @@ featChecks // {
         for fixture_dir in ./spec/ci/fixtures/fail/*/; do
           if [ -d "$fixture_dir" ]; then
             fixture_name=$(basename "$fixture_dir")
+            
+            # Skip duplicate-feat-id (tested by global-uniq-fixtures)
+            if [ "$fixture_name" = "duplicate-feat-id" ]; then
+              echo "  Skipping: $fixture_name (cross-feat check, tested by global-uniq-fixtures)"
+              continue
+            fi
+            
             echo "  Testing: $fixture_name"
             
             # FAIL期待なので、exit 1が正常
