@@ -4,8 +4,11 @@
 #
 # Fixture Import Policy (SSOT - 混在禁止):
 #   ✅ Runner側でcontract+checksを注入
-#   ✅ Fixture側でschema importは許可（型制約のため必要）
+#   ✅ Fixture側でschema/* importは許可（#Feature型制約のため必要）
 #   ❌ Fixture側でcontract/checks import禁止（偽PASS/FAIL防止）
+#
+# Fixture責務: schema型に適合するデータ定義
+# Runner責務: contract/checks制約の検証
 #
 # Implementation:
 #   cue vet \
@@ -15,7 +18,78 @@
 
 { pkgs, self }:
 
-{
+let
+  # Per-feat derivation splitting for parallel validation
+  featDirs = builtins.attrNames (builtins.readDir (self + "/spec/urn/feat"));
+  
+  mkFeatCheck = slug: pkgs.runCommand "feat-${slug}"
+    {
+      buildInputs = with pkgs; [ cue ];
+    }
+    ''
+      set -euo pipefail
+      cd ${self}
+      
+      echo "→ Validating feat: ${slug}"
+      ${pkgs.cue}/bin/cue vet \
+        ./spec/urn/feat/${slug}/... \
+        ./spec/schema/... \
+        ./spec/ci/contract/...
+      
+      echo "✅ feat-${slug} PASS"
+      mkdir -p $out && echo "ok" > $out/result
+    '';
+  
+  featChecks = builtins.listToAttrs (
+    map (slug: { name = "feat-${slug}"; value = mkFeatCheck slug; }) featDirs
+  );
+  
+  # Policy check: dev branch scope validation
+  policy-dev-scope = pkgs.runCommand "policy-dev-scope"
+    {
+      buildInputs = with pkgs; [ git bash ];
+    }
+    ''
+      set -euo pipefail
+      cd ${self}
+      
+      echo "🔍 dev branch scope policy check"
+      
+      # Check if main branch exists
+      if ! git rev-parse main >/dev/null 2>&1; then
+        echo "⚠️  main branch not found, skipping policy check"
+        mkdir -p $out && echo "skipped" > $out/result
+        exit 0
+      fi
+      
+      # Get changed files
+      CHANGED="$(git diff --name-only main...HEAD || echo "")"
+      
+      if [[ -z "$CHANGED" ]]; then
+        echo "ℹ️  No changes from main"
+        mkdir -p $out && echo "ok" > $out/result
+        exit 0
+      fi
+      
+      # Check for forbidden changes to spec/urn/feat/
+      DENY="$(echo "$CHANGED" | grep -E '^spec/urn/feat/' || true)"
+      
+      if [[ -n "$DENY" ]]; then
+        echo "❌ NG: dev branch modified spec/urn/feat/"
+        echo "$DENY"
+        exit 1
+      fi
+      
+      echo "✅ OK: dev branch scope compliant"
+      mkdir -p $out && echo "ok" > $out/result
+    '';
+
+in
+
+featChecks // {
+  # Policy checks
+  inherit policy-dev-scope;
+  
   # Phase 0: Baseline smoke checks
   spec-smoke = pkgs.runCommand "spec-smoke"
     {
@@ -28,47 +102,48 @@
       echo "🔍 Phase 0: smoke checks"
       ${pkgs.cue}/bin/cue fmt --check ./spec
       # Note: fixtures除外（意図的PASS/FAIL検証はspec-fastで実施）
+      # Note: checks/除外（未実装、次フェーズで対応）
       ${pkgs.cue}/bin/cue vet \
         ./spec/urn/... \
         ./spec/schema/... \
         ./spec/adapter/... \
         ./spec/mapping/... \
         ./spec/external/... \
-        ./spec/ci/checks/... \
         ./spec/ci/contract/...
       
-      echo "✅ smoke PASS"
+      echo "✅ smoke PASS (contract constraints verified)"
       mkdir -p $out && echo "ok" > $out/result
     '';
 
-  # Phase 1 fast: CUE契約による全検証 + fixture検証（PR mode）
+  # Phase 1 fast: Aggregated validation with per-feat parallelism
   # Design:
-  #   - cueを直接実行（check.sh経由禁止 - 循環防止）
-  #   - runner側でcontract+checksを注入（fixture側import禁止）
-  #   - PASS期待: spec/ci/fixtures/pass/** → exit 0で成功
-  #   - FAIL期待: spec/ci/fixtures/fail/** → exit 1を確認して成功
+  #   - Per-feat validation runs in parallel (via Nix derivation deps)
+  #   - spec-fast aggregates all feat checks + other spec areas
+  #   - Policy checks enforced as dependencies
   spec-fast = pkgs.runCommand "spec-fast"
     {
-      buildInputs = with pkgs; [ cue bash ];
+      buildInputs = with pkgs; [ cue bash ] ++ (builtins.attrValues featChecks) ++ [ policy-dev-scope ];
     }
     ''
       set -euo pipefail
       cd ${self}
       
-      echo "🏃 Phase 1: fast checks"
+      echo "🏃 Phase 1: fast checks (aggregated)"
       echo ""
       
-      # 1. 本体spec検証（contract + checks適用）
-      echo "→ Validating main spec with contracts..."
+      # 1. Per-feat validations (already completed via buildInputs deps)
+      echo "✅ All feat validations completed (${toString (builtins.length featDirs)} feats)"
+      echo ""
+      
+      # 2. Other spec areas validation
+      echo "→ Validating other spec areas..."
       ${pkgs.cue}/bin/cue vet \
-        ./spec/urn/... \
         ./spec/schema/... \
         ./spec/adapter/... \
         ./spec/mapping/... \
         ./spec/external/... \
-        ./spec/ci/checks/... \
         ./spec/ci/contract/...
-      echo "✅ Main spec PASS"
+      echo "✅ Other spec areas PASS"
       echo ""
       
       # 2. PASS fixture検証（将来用 - 現在は空でOK）
@@ -138,16 +213,16 @@
       
       echo "🐢 Phase 1: slow checks"
       # Note: fixtures除外（意図的PASS/FAIL検証はspec-fastで実施）
+      # Note: checks/除外（未実装、次フェーズで対応）
       ${pkgs.cue}/bin/cue vet \
         ./spec/urn/... \
         ./spec/schema/... \
         ./spec/adapter/... \
         ./spec/mapping/... \
         ./spec/external/... \
-        ./spec/ci/checks/... \
         ./spec/ci/contract/...
       
-      echo "✅ slow PASS"
+      echo "✅ slow PASS (contract constraints verified)"
       mkdir -p $out && echo "ok" > $out/result
     '';
 

@@ -68,13 +68,7 @@
         packages.default = self.packages.${system}.validate;
 
         # Check definitions (SSOT for CI)
-        checks = {
-          spec-smoke = checks-defs.spec-smoke;
-          spec-fast = checks-defs.spec-fast;
-          spec-slow = checks-defs.spec-slow;
-          spec-unit = checks-defs.spec-unit;
-          spec-e2e = checks-defs.spec-e2e;
-        };
+        checks = checks-defs;
       }
     ) // {
       # **重要: spec/ を flake outputs として露出**
