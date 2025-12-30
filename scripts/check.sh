@@ -1,33 +1,40 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Entry point: CUE contract executor (NO RULES ALLOWED)
-# SSOT: spec/ci/contract/*.cue
+# Entry point: Single entry validation (NO LOGIC ALLOWED)
+# SSOT: nix/checks.nix (all validation logic lives there)
 # Usage: check.sh [smoke|fast|slow|unit]
-# Design: ルール禁止、cue vet実行のみ
+# Design: ロジック禁止、nix flake check呼び出しのみ
+#
+# Rationale:
+#   - 単一入口化: 同じ手順で同じ判定
+#   - 循環防止: nix checks → cue vet直接実行
+#   - 再現性: CI/ローカルで完全に同一の検証
 
 MODE="${1:-fast}"
+
+# Detect system (避けられないロジック - systemは環境依存)
+SYSTEM=$(nix eval --impure --raw --expr 'builtins.currentSystem')
 
 case "$MODE" in
   smoke)
     echo "🔍 Phase 0: smoke checks"
-    cue fmt --check ./spec
-    cue vet ./spec/...
-    echo "✅ smoke PASS"
+    nix build .#checks.${SYSTEM}.spec-smoke --no-link --print-build-logs
     ;;
     
-  fast|slow)
-    echo "🏃 Phase 1: $MODE checks"
-    # ルールは全てCUE契約に存在、ここは実行のみ
-    # Note: spec/ci/fixtures/は除外（意図的PASS/FAIL検証はNix checks内で実施）
-    cue vet ./spec/urn/... ./spec/schema/... ./spec/adapter/... ./spec/mapping/... ./spec/external/... ./spec/ci/checks/... ./spec/ci/contract/...
-    echo "✅ $MODE PASS"
+  fast)
+    echo "🏃 Phase 1: fast checks (includes fixtures)"
+    nix build .#checks.${SYSTEM}.spec-fast --no-link --print-build-logs
+    ;;
+
+  slow)
+    echo "🐢 Phase 1: slow checks"
+    nix build .#checks.${SYSTEM}.spec-slow --no-link --print-build-logs
     ;;
     
   unit)
     echo "🧪 Phase 2: unit tests"
-    bash tests/unit/run.sh
-    echo "✅ unit PASS"
+    nix build .#checks.${SYSTEM}.spec-unit --no-link --print-build-logs
     ;;
     
   *)
