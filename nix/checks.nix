@@ -1,6 +1,16 @@
 # Check definitions for Phase 0/1
-# SSOT: CUE契約（spec/ci/contract/*.cue）
+# SSOT: CUE契約（spec/ci/contract/*.cue + spec/ci/checks/*.cue）
 # Design: cue vet実行器（ルール禁止）
+#
+# Fixture Import Policy (SSOT - 混在禁止):
+#   ✅ Runner側でcontract+checksを注入
+#   ❌ Fixture側でimport文を記述（偽PASS/FAIL防止）
+#
+# Implementation:
+#   cue vet \
+#     ./spec/ci/fixtures/{pass,fail}/*/... \
+#     ./spec/ci/contract/... \
+#     ./spec/ci/checks/...
 
 { pkgs, self }:
 
