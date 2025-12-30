@@ -10,16 +10,40 @@
     flake-utils.lib.eachDefaultSystem (system:
       let
         pkgs = nixpkgs.legacyPackages.${system};
-        checks-defs = import ./nix/checks.nix { inherit pkgs self; };
+        
+        # CUE v0.15.1 固定（TDD-RED設計の前提）
+        cue = pkgs.buildGoModule rec {
+          pname = "cue";
+          version = "0.15.1";
+          
+          src = pkgs.fetchFromGitHub {
+            owner = "cue-lang";
+            repo = "cue";
+            rev = "v${version}";
+            hash = "sha256-0DxJK5S1uWR5MbI8VzUxQv+YTwIIm1yK77Td+Qf278I=";
+          };
+          
+          vendorHash = "sha256-ivFw62+pg503EEpRsdGSQrFNah87RTUrRXUSPZMFLG4=";
+          
+          subPackages = [ "cmd/cue" ];
+          
+          ldflags = [
+            "-s"
+            "-w"
+            "-X cuelang.org/go/cmd/cue/cmd.version=v${version}"
+          ];
+        };
+        
+        checks-defs = import ./nix/checks.nix { inherit pkgs self cue; };
       in
       {
         # 開発環境（CUEツールを含む）
         devShells.default = pkgs.mkShell {
-          buildInputs = with pkgs; [
+          buildInputs = [
             cue
-            git
-            bash
-            go
+            pkgs.git
+            pkgs.bash
+            pkgs.go
           ];
 
           shellHook = ''
@@ -55,11 +79,11 @@
           echo ""
 
           echo "→ cue eval ./spec/..."
-          ${pkgs.cue}/bin/cue eval ./spec/...
+          ${cue}/bin/cue eval ./spec/...
 
           echo ""
           echo "→ cue vet ./spec/ci/checks/..."
-          ${pkgs.cue}/bin/cue vet ./spec/ci/checks/... ./spec/...
+          ${cue}/bin/cue vet ./spec/ci/checks/... ./spec/...
 
           echo ""
           echo "✅ All validations passed"

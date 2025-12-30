@@ -16,7 +16,7 @@
 #     ./spec/ci/contract/... \
 #     ./spec/ci/checks/...
 
-{ pkgs, self }:
+{ pkgs, self, cue }:
 
 let
   # Per-feat derivation splitting for parallel validation
@@ -24,14 +24,14 @@ let
   
   mkFeatCheck = slug: pkgs.runCommand "feat-${slug}"
     {
-      buildInputs = with pkgs; [ cue ];
+      buildInputs = [ cue ];
     }
     ''
       set -euo pipefail
       cd ${self}
       
       echo "→ Validating feat: ${slug}"
-      ${pkgs.cue}/bin/cue vet \
+      ${cue}/bin/cue vet \
         ./spec/urn/feat/${slug}/... \
         ./spec/schema/... \
         ./spec/ci/contract/...
@@ -48,7 +48,7 @@ let
   # DoD論点4: CUE乱立でも4原則（重複なし）担保
   global-uniq-fixtures = pkgs.runCommand "global-uniq-fixtures"
     {
-      buildInputs = with pkgs; [ cue jq ];
+      buildInputs = [ cue pkgs.jq ];
     }
     ''
       set -euo pipefail
@@ -71,7 +71,7 @@ let
         if [ -d "$feat_dir" ]; then
           echo "  Checking: $(basename "$feat_dir")"
           # Use cue eval with -e to extract specific field
-          CUE_OUT=$(${pkgs.cue}/bin/cue eval "$feat_dir"/feature.cue -e feature.id 2>&1 || true)
+          CUE_OUT=$(${cue}/bin/cue eval "$feat_dir"/feature.cue -e feature.id 2>&1 || true)
           echo "    CUE output: $CUE_OUT"
           ID=$(echo "$CUE_OUT" | tr -d '"' | grep -E '^urn:' || true)
           if [ -n "$ID" ]; then
@@ -153,17 +153,17 @@ featChecks // {
   # Phase 0: Baseline smoke checks
   spec-smoke = pkgs.runCommand "spec-smoke"
     {
-      buildInputs = with pkgs; [ cue ];
+      buildInputs = [ cue ];
     }
     ''
       set -euo pipefail
       cd ${self}
       
       echo "🔍 Phase 0: smoke checks"
-      ${pkgs.cue}/bin/cue fmt --check ./spec
+      ${cue}/bin/cue fmt --check ./spec
       # Note: fixtures除外（意図的PASS/FAIL検証はspec-fastで実施）
       # Note: checks/除外（未実装、次フェーズで対応）
-      ${pkgs.cue}/bin/cue vet \
+      ${cue}/bin/cue vet \
         ./spec/urn/... \
         ./spec/schema/... \
         ./spec/adapter/... \
@@ -182,7 +182,7 @@ featChecks // {
   #   - Policy checks enforced as dependencies
   spec-fast = pkgs.runCommand "spec-fast"
     {
-      buildInputs = with pkgs; [ cue bash ] ++ (builtins.attrValues featChecks) ++ [ policy-dev-scope ];
+      buildInputs = [ cue pkgs.bash ] ++ (builtins.attrValues featChecks) ++ [ policy-dev-scope ];
     }
     ''
       set -euo pipefail
@@ -197,7 +197,7 @@ featChecks // {
       
       # 2. Other spec areas validation
       echo "→ Validating other spec areas..."
-      ${pkgs.cue}/bin/cue vet \
+      ${cue}/bin/cue vet \
         ./spec/schema/... \
         ./spec/adapter/... \
         ./spec/mapping/... \
@@ -209,7 +209,7 @@ featChecks // {
       # 2. PASS fixture検証（将来用 - 現在は空でOK）
       if [ -d "./spec/ci/fixtures/pass" ] && [ -n "$(find ./spec/ci/fixtures/pass -name '*.cue' 2>/dev/null)" ]; then
         echo "→ Validating PASS fixtures (expect success)..."
-        ${pkgs.cue}/bin/cue vet \
+        ${cue}/bin/cue vet \
           ./spec/ci/fixtures/pass/... \
           ./spec/ci/contract/... \
           ./spec/ci/checks/...
@@ -241,7 +241,7 @@ featChecks // {
             echo "  Testing: $fixture_name"
             
             # FAIL期待なので、exit 1が正常
-            if ${pkgs.cue}/bin/cue vet \
+            if ${cue}/bin/cue vet \
               "$fixture_dir"... \
               ./spec/ci/contract/... \
               ./spec/ci/checks/... 2>&1 | head -20; then
@@ -272,7 +272,7 @@ featChecks // {
   # Phase 1 slow: fast同等（main push mode）
   spec-slow = pkgs.runCommand "spec-slow"
     {
-      buildInputs = with pkgs; [ cue ];
+      buildInputs = [ cue ];
     }
     ''
       set -euo pipefail
@@ -281,7 +281,7 @@ featChecks // {
       echo "🐢 Phase 1: slow checks"
       # Note: fixtures除外（意図的PASS/FAIL検証はspec-fastで実施）
       # Note: checks/除外（未実装、次フェーズで対応）
-      ${pkgs.cue}/bin/cue vet \
+      ${cue}/bin/cue vet \
         ./spec/urn/... \
         ./spec/schema/... \
         ./spec/adapter/... \
@@ -307,5 +307,34 @@ featChecks // {
     ''
       echo "ℹ️  spec:e2e: placeholder (integration tests pending)"
       mkdir -p $out && echo "ok" > $out/result
+    '';
+  
+  # TDD-RED checks: DoD4 (重複なし)
+  # Purpose: Verify that uniqueness detector fails in RED phase (report: _|_)
+  # Expected: Build should FAIL due to explicit error (_|_)
+  tdd-red-04-uniq = pkgs.runCommand "tdd-red-04-uniq"
+    {
+      buildInputs = [ cue ];
+    }
+    ''
+      set -euo pipefail
+      
+      echo "🔴 TDD-RED: DoD4 (重複なし)"
+      echo "Expected: Explicit error (_|_) from detector.Uniq.report"
+      echo ""
+      
+      # Copy source to writable location (Nix store is read-only)
+      cp -r ${self} /build/src
+      chmod -R u+w /build/src
+      cd /build/src/spec/ci/tdd/red/04-uniq
+      
+      # This SHOULD fail because report: _|_
+      if ${cue}/bin/cue vet . 2>&1; then
+        echo "❌ UNEXPECTED: Test passed (should fail in RED phase)"
+        exit 1
+      else
+        echo "✅ Test failed as expected (RED phase working correctly)"
+        mkdir -p $out && echo "red-pass" > $out/result
+      fi
     '';
 }
