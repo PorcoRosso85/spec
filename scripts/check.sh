@@ -1,54 +1,36 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Entry point dispatcher for all spec checks
-# SSOT: nix/checks.nix
-# Usage: check.sh [smoke|fast|slow|unit|e2e]
-# All checks must use this entry point (DO NOT bypass)
+# Entry point: CUE contract executor (NO RULES ALLOWED)
+# SSOT: spec/ci/contract/*.cue
+# Usage: check.sh [smoke|fast|slow|unit]
+# Design: ルール禁止、cue vet実行のみ
 
 MODE="${1:-fast}"
-
-# For now: execute scripts directly (no nix check integration yet)
-# Future: can switch to `nix build .#checks...spec-${MODE}`
 
 case "$MODE" in
   smoke)
     echo "🔍 Phase 0: smoke checks"
-    echo "  ① cue fmt --check"
-    cue fmt --check --files ./spec
-    echo "  ② cue vet"
+    cue fmt --check ./spec
     cue vet ./spec/...
-    echo "✅ Phase 0 smoke PASS"
+    echo "✅ smoke PASS"
     ;;
     
-  fast)
-    echo "🏃 Phase 1: fast checks"
-    ./tools/spec-lint/spec-lint.sh . --mode fast
-    cue fmt --check --files ./spec
-    cue vet ./spec/...
-    echo "✅ Phase 1 fast PASS"
-    ;;
-    
-  slow)
-    echo "🐢 Phase 1: slow checks"
-    ./tools/spec-lint/spec-lint.sh . --mode slow
-    cue fmt --check --files ./spec
-    cue vet ./spec/...
-    echo "✅ Phase 1 slow PASS"
+  fast|slow)
+    echo "🏃 Phase 1: $MODE checks"
+    # ルールは全てCUE契約に存在、ここは実行のみ
+    cue vet ./spec/... ./spec/ci/contract/...
+    echo "✅ $MODE PASS"
     ;;
     
   unit)
     echo "🧪 Phase 2: unit tests"
     bash tests/unit/run.sh
-    echo "✅ Phase 2 unit PASS"
-    ;;
-    
-  e2e)
-    echo "ℹ️  spec:e2e: placeholder (future nightly)"
+    echo "✅ unit PASS"
     ;;
     
   *)
-    echo "Usage: check.sh [smoke|fast|slow|unit|e2e]"
+    echo "Usage: check.sh [smoke|fast|slow|unit]"
     exit 1
     ;;
 esac
