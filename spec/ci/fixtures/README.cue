@@ -10,15 +10,13 @@
 //
 // Import Policy (SSOT):
 //   ✅ Runner (nix/checks.nix) injects contract+checks
-//   ✅ Fixtures MAY import schema/* (for #Feature type constraint)
+//   ✅ Fixtures MAY import schema (for type constraints)
 //   ❌ Fixtures MUST NOT import contract/checks directly
 //
 // Why:
-//   - Prevents import omission (false PASS for contract/checks)
+//   - Prevents import omission (false PASS)
 //   - Prevents partial import (false FAIL)
-//   - Single responsibility: 
-//     * fixtures = data conforming to types
-//     * runner = contract/checks validation
+//   - Single responsibility: fixtures = pure data
 //
 // Validation:
 //   nix flake check  → runs spec-fast with fixture validation
