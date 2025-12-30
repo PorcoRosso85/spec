@@ -4,8 +4,11 @@
 #
 # Fixture Import Policy (SSOT - 混在禁止):
 #   ✅ Runner側でcontract+checksを注入
-#   ✅ Fixture側でschema importは許可（型制約のため必要）
+#   ✅ Fixture側でschema/* importは許可（#Feature型制約のため必要）
 #   ❌ Fixture側でcontract/checks import禁止（偽PASS/FAIL防止）
+#
+# Fixture責務: schema型に適合するデータ定義
+# Runner責務: contract/checks制約の検証
 #
 # Implementation:
 #   cue vet \
@@ -28,16 +31,16 @@
       echo "🔍 Phase 0: smoke checks"
       ${pkgs.cue}/bin/cue fmt --check ./spec
       # Note: fixtures除外（意図的PASS/FAIL検証はspec-fastで実施）
+      # Note: checks/除外（未実装、次フェーズで対応）
       ${pkgs.cue}/bin/cue vet \
         ./spec/urn/... \
         ./spec/schema/... \
         ./spec/adapter/... \
         ./spec/mapping/... \
         ./spec/external/... \
-        ./spec/ci/checks/... \
         ./spec/ci/contract/...
       
-      echo "✅ smoke PASS"
+      echo "✅ smoke PASS (contract constraints verified)"
       mkdir -p $out && echo "ok" > $out/result
     '';
 
@@ -58,7 +61,16 @@
       echo "🏃 Phase 1: fast checks"
       echo ""
       
-      # 1. 本体spec検証（contract + checks適用）
+      # 1. 本体spec検証（contract適用、checks/は未実装のため除外）
+      # 検証対象:
+      #   - spec/urn/**       : 機能URN定義
+      #   - spec/schema/**    : 型定義
+      #   - spec/adapter/**   : Git/session adapter
+      #   - spec/mapping/**   : 内部↔外部URNマッピング
+      #   - spec/external/**  : 外部標準カタログ
+      #   - spec/ci/contract/** : Contract制約（naming, uniq, refs shape）
+      # 非検証対象:
+      #   - spec/ci/checks/** : 未実装（コメントのみ）、次フェーズで実装予定
       echo "→ Validating main spec with contracts..."
       ${pkgs.cue}/bin/cue vet \
         ./spec/urn/... \
@@ -66,9 +78,8 @@
         ./spec/adapter/... \
         ./spec/mapping/... \
         ./spec/external/... \
-        ./spec/ci/checks/... \
         ./spec/ci/contract/...
-      echo "✅ Main spec PASS"
+      echo "✅ Main spec PASS (contract constraints verified)"
       echo ""
       
       # 2. PASS fixture検証（将来用 - 現在は空でOK）
@@ -138,16 +149,16 @@
       
       echo "🐢 Phase 1: slow checks"
       # Note: fixtures除外（意図的PASS/FAIL検証はspec-fastで実施）
+      # Note: checks/除外（未実装、次フェーズで対応）
       ${pkgs.cue}/bin/cue vet \
         ./spec/urn/... \
         ./spec/schema/... \
         ./spec/adapter/... \
         ./spec/mapping/... \
         ./spec/external/... \
-        ./spec/ci/checks/... \
         ./spec/ci/contract/...
       
-      echo "✅ slow PASS"
+      echo "✅ slow PASS (contract constraints verified)"
       mkdir -p $out && echo "ok" > $out/result
     '';
 
