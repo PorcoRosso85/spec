@@ -10,6 +10,7 @@
 //
 // Import Policy (SSOT):
 //   ✅ Runner (nix/checks.nix) injects contract+checks
+//   ✅ Fixtures MAY import schema (for type constraints)
 //   ❌ Fixtures MUST NOT import contract/checks directly
 //
 // Why:

@@ -4,7 +4,8 @@
 #
 # Fixture Import Policy (SSOT - 混在禁止):
 #   ✅ Runner側でcontract+checksを注入
-#   ❌ Fixture側でimport文を記述（偽PASS/FAIL防止）
+#   ✅ Fixture側でschema importは許可（型制約のため必要）
+#   ❌ Fixture側でcontract/checks import禁止（偽PASS/FAIL防止）
 #
 # Implementation:
 #   cue vet \
