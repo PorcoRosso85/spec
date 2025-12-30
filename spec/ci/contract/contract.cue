@@ -9,7 +9,10 @@ package contract
 // Contract definition
 #Contract: {
 	// Naming rules (kebab-case, URN format)
-	naming: #Feature
+	naming: {
+		slugPattern: string
+		urnPattern:  string
+	}
 	
 	// Uniqueness rules (no duplicate IDs)
 	uniqueness: #UniquenessCheck
@@ -20,4 +23,9 @@ package contract
 }
 
 // Export for engine consumption
-contract: #Contract
+contract: #Contract & {
+	naming: {
+		slugPattern: "^[a-z0-9]+(-[a-z0-9]+)*$"
+		urnPattern:  "^urn:feat:[a-z0-9]+(-[a-z0-9]+)*$"
+	}
+}
