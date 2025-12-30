@@ -44,6 +44,63 @@ let
     map (slug: { name = "feat-${slug}"; value = mkFeatCheck slug; }) featDirs
   );
   
+  # Global uniqueness check: Detect duplicate feat IDs across all feats
+  # DoD論点4: CUE乱立でも4原則（重複なし）担保
+  global-uniq-fixtures = pkgs.runCommand "global-uniq-fixtures"
+    {
+      buildInputs = with pkgs; [ cue jq ];
+    }
+    ''
+      set -euo pipefail
+      cd ${self}
+      
+      echo "🔍 Global uniqueness check (fixtures)"
+      
+      # Extract all feat IDs from duplicate-feat-id fixtures
+      FIXTURE_DIR="./spec/ci/fixtures/fail/duplicate-feat-id"
+      
+      if [ ! -d "$FIXTURE_DIR" ]; then
+        echo "⚠️  No duplicate-feat-id fixtures, skipping"
+        mkdir -p $out && echo "skipped" > $out/result
+        exit 0
+      fi
+      
+      # Extract IDs from all subdirectories
+      IDS_FILE=$(mktemp)
+      for feat_dir in "$FIXTURE_DIR"/*/; do
+        if [ -d "$feat_dir" ]; then
+          echo "  Checking: $(basename "$feat_dir")"
+          # Use cue eval with -e to extract specific field
+          CUE_OUT=$(${pkgs.cue}/bin/cue eval "$feat_dir"/feature.cue -e feature.id 2>&1 || true)
+          echo "    CUE output: $CUE_OUT"
+          ID=$(echo "$CUE_OUT" | tr -d '"' | grep -E '^urn:' || true)
+          if [ -n "$ID" ]; then
+            echo "    ✅ Extracted ID: $ID"
+            echo "$ID" >> "$IDS_FILE"
+          else
+            echo "    ⚠️  Failed to extract ID"
+          fi
+        fi
+      done
+      
+      echo ""
+      echo "All extracted IDs:"
+      cat "$IDS_FILE"
+      echo ""
+      
+      # Check for duplicates
+      DUPLICATES=$(sort "$IDS_FILE" | uniq -d)
+      
+      if [ -n "$DUPLICATES" ]; then
+        echo "✅ Duplicate IDs detected (as expected for FAIL fixture):"
+        echo "$DUPLICATES"
+        mkdir -p $out && echo "ok" > $out/result
+      else
+        echo "❌ No duplicates found - fixture should contain duplicate IDs!"
+        exit 1
+      fi
+    '';
+  
   # Policy check: dev branch scope validation
   policy-dev-scope = pkgs.runCommand "policy-dev-scope"
     {
@@ -87,6 +144,9 @@ let
 in
 
 featChecks // {
+  # Global checks (cross-feat constraints)
+  inherit global-uniq-fixtures;
+  
   # Policy checks
   inherit policy-dev-scope;
   
