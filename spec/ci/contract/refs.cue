@@ -1,5 +1,7 @@
 package contract
 
+import "github.com/porcorosso85/spec-repo/spec/schema"
+
 // Reference Shape SSOT (形状のみ)
 //
 // Scope:
@@ -19,7 +21,7 @@ package contract
 	// Reference pattern: urn:feat:<slug>
 	// 形状のみを検証（存在確認はP2）
 	
-	validFeatURNPattern: "^urn:feat:[a-z0-9]+(-[a-z0-9]+)*$"
+	validFeatURNPattern: schema.#Patterns.featureURN.pattern
 	
 	// Paths to scan for references (将来のvalidator用メタ情報)
 	scanPaths: [

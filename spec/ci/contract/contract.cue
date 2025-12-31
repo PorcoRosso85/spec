@@ -1,5 +1,7 @@
 package contract
 
+import "github.com/porcorosso85/spec-repo/spec/schema"
+
 // Contract SSOT - Single source of truth for spec-repo validation
 // NO MD CONTRACTS: All rules defined in CUE only
 
@@ -42,7 +44,7 @@ package contract
 // Export for engine consumption
 contract: #Contract & {
 	naming: {
-		slugPattern: "^[a-z0-9]+(-[a-z0-9]+)*$"
-		urnPattern:  "^urn:feat:[a-z0-9]+(-[a-z0-9]+)*$"
+		slugPattern: schema.#Patterns.kebabCase.pattern
+		urnPattern:  schema.#Patterns.featureURN.pattern
 	}
 }

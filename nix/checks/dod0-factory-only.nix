@@ -1,0 +1,52 @@
+{ pkgs, self, ... }:
+let
+  hasInfix = pkgs.lib.strings.hasInfix;
+  
+  checksDir = self + "/nix/checks";
+  checksDirExists = builtins.pathExists checksDir;
+  checkFiles = if checksDirExists 
+               then builtins.attrNames (builtins.readDir checksDir)
+               else [];
+  
+  # ✅ DoD自身は例外（これらのファイルは構造検証のためrunCommandを使う）
+  dodExceptions = [
+    "dod0-factory-only.nix"
+    "dod0-flake-srp.nix"
+    "dod7-no-integration-duplication.nix"
+    "dod8-patterns-ssot.nix"
+  ];
+  
+  checkFile = file:
+    let
+      path = checksDir + "/${file}";
+      content = builtins.readFile path;
+      isException = builtins.elem file dodExceptions;
+      
+      # ✅ Bug 9修正: 実体記法のみ検出（誤爆防止）
+      # コメントや説明文の "runCommand" では検出しない
+      patterns = [
+        "pkgs.runCommand"
+        "pkgs.stdenv.mkDerivation"
+        "stdenv.mkDerivation"
+      ];
+      
+      hasDirectDerivation = builtins.any (p: hasInfix p content) patterns;
+      
+      violations = if isException then []
+                   else if hasDirectDerivation then ["${file}: contains direct derivation (use Factory)"]
+                   else [];
+    in violations;
+  
+  allViolations = builtins.concatLists (map checkFile checkFiles);
+
+in pkgs.runCommand "dod0-factory-only" {} ''
+  ${if allViolations == [] then ''
+    echo "PASS: All checks use Factory (no direct derivation)" > $out
+    echo "  Checked ${toString (builtins.length checkFiles)} files" >> $out
+    echo "  Exempted ${toString (builtins.length dodExceptions)} DoD files" >> $out
+  '' else ''
+    echo "FAIL: Direct derivation found in checks/" >&2
+    ${builtins.concatStringsSep "\n" (map (v: "echo '  ${v}' >&2") allViolations)}
+    exit 1
+  ''}
+''

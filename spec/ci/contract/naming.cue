@@ -1,16 +1,18 @@
 package contract
 
+import "github.com/porcorosso85/spec-repo/spec/schema"
+
 // Naming convention SSOT
 // All slug fields MUST match kebab-case pattern
 
 // Kebab-case pattern: lowercase letters, digits, and hyphens
-#KebabCasePattern: =~"^[a-z0-9]+(-[a-z0-9]+)*$"
+#KebabCasePattern: =~schema.#Patterns.kebabCase.pattern
 
 // Feature slug constraint
 #FeatureSlug: string & #KebabCasePattern
 
 // URN format (DRY: id derived from slug)
-#FeatureURN: =~"^urn:feat:[a-z0-9]+(-[a-z0-9]+)*$"
+#FeatureURN: =~schema.#Patterns.featureURN.pattern
 
 // Validation: feature slug and id consistency
 #Feature: {

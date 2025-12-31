@@ -34,6 +34,9 @@
           ];
         };
         
+        # Phase 0: Factory + Validator (Bug 1-9 + U1-U2 fixes)
+        builders = import ./nix/lib/builders.nix { inherit pkgs self; cue = cue-v15; };
+        
         # Integration test utilities (Phase 6)
         integration = import ./nix/lib/integration.nix { inherit pkgs self; cue = cue-v15; };
         
@@ -183,245 +186,32 @@
         # Phase 6: Integration Verification (実データ接続の検証)
         # 2-tier structure: Verify (clean) + Negative (malicious detection)
         
-        # Tier 1: Verify (正常系) - spec-repo実体がクリーンであることを確認
-        packages.integration-verify-dod4 = pkgs.stdenv.mkDerivation {
-          name = "integration-verify-dod4";
-          src = self;
-          buildInputs = [ cue-v15 ];
-          
-          buildPhase =
-            let
-              # Extract all feats and generate clean CUE
-              feats = integration.extractAllFeats;
-              inputCue = pkgs.writeText "input.cue" (integration.genFeatListVerifyCue feats);
-            in ''
-            echo "🔍 Integration-Verify: DoD4 (実データがクリーン)"
-            echo "Expected: SUCCESS (no duplicates in spec/urn/feat/*)"
-            
-            # Copy integration test files
-            mkdir -p integration-test
-            cp ${inputCue} integration-test/input.cue
-            cp ${self}/spec/ci/integration/verify/04-uniq/expected.cue integration-test/
-            cp ${self}/spec/ci/integration/verify/04-uniq/test.cue integration-test/
-            
-            cd integration-test
-            ${cue-v15}/bin/cue vet .
-          '';
-          
-          installPhase = ''
-            mkdir -p $out
-            echo "verify-success" > $out/result
-          '';
-        };
-        
-        # Tier 2: Negative (悪性検出) - 配線の実効性確認
-        packages.integration-negative-dod4 = pkgs.stdenv.mkDerivation {
-          name = "integration-negative-dod4";
-          src = self;
-          buildInputs = [ cue-v15 ];
-          
-          buildPhase =
-            let
-              # Extract all feats and generate CUE with duplicate (malicious)
-              feats = integration.extractAllFeats;
-              inputCue = pkgs.writeText "input.cue" (integration.genFeatListNegativeCue feats);
-            in ''
-            echo "🔍 Integration-Negative: DoD4 (悪性注入→検出確認)"
-            echo "Expected: SUCCESS (duplicate detected correctly)"
-            
-            # Copy integration test files
-            mkdir -p integration-test
-            cp ${inputCue} integration-test/input.cue
-            cp ${self}/spec/ci/integration/negative/04-uniq/expected.cue integration-test/
-            cp ${self}/spec/ci/integration/negative/04-uniq/test.cue integration-test/
-            
-            cd integration-test
-            ${cue-v15}/bin/cue vet .
-          '';
-          
-          installPhase = ''
-            mkdir -p $out
-            echo "negative-success" > $out/result
-          '';
-        };
-        
-        # DoD2: Consumer API Integration Tests
-        
-        # Tier 1: Verify (正常系) - self.spec keys完全性確認
-        packages.integration-verify-dod2 = pkgs.stdenv.mkDerivation {
-          name = "integration-verify-dod2";
-          src = self;
-          buildInputs = [ cue-v15 ];
-          
-          buildPhase =
-            let
-              # Extract spec keys and generate clean CUE
-              specKeys = integration.extractSpecKeys self.spec;
-              inputCue = pkgs.writeText "input.cue" (integration.genConsumerAPIVerifyCue specKeys);
-            in ''
-            mkdir -p integration-test
-            cp ${inputCue} integration-test/input.cue
-            cp ${self}/spec/ci/integration/verify/02-consumer-api/expected.cue integration-test/
-            cp ${self}/spec/ci/integration/verify/02-consumer-api/test.cue integration-test/
-            
-            cd integration-test
-            ${cue-v15}/bin/cue vet .
-          '';
-          
-          installPhase = ''
-            mkdir -p $out
-            echo "verify-success" > $out/result
-          '';
-        };
-        
-        # Tier 2: Negative (異常系) - 欠落検出確認
-        packages.integration-negative-dod2 = pkgs.stdenv.mkDerivation {
-          name = "integration-negative-dod2";
-          src = self;
-          buildInputs = [ cue-v15 ];
-          
-          buildPhase =
-            let
-              # Extract spec keys and generate CUE with missing key (malicious)
-              specKeys = integration.extractSpecKeys self.spec;
-              missingKey = "spec.urn.envPath";
-              inputCue = pkgs.writeText "input.cue" (integration.genConsumerAPINegativeCue specKeys missingKey);
-            in ''
-            mkdir -p integration-test
-            cp ${inputCue} integration-test/input.cue
-            cp ${self}/spec/ci/integration/negative/02-consumer-api/expected.cue integration-test/
-            cp ${self}/spec/ci/integration/negative/02-consumer-api/test.cue integration-test/
-            
-            cd integration-test
-            ${cue-v15}/bin/cue vet .
-          '';
-          
-          installPhase = ''
-            mkdir -p $out
-            echo "negative-success" > $out/result
-          '';
-        };
-        
-        # DoD1: Responsibility Integration Tests
-        
-        # Tier 1: Verify (正常系) - Real feats have no forbidden fields
-        packages.integration-verify-dod1 = pkgs.stdenv.mkDerivation {
-          name = "integration-verify-dod1";
-          src = self;
-          buildInputs = [ cue-v15 ];
-          
-          buildPhase =
-            let
-              # Extract first feat as representative (all feats are clean)
-              feats = integration.extractAllFeats;
-              firstFeat = builtins.head feats;
-              inputCue = pkgs.writeText "input.cue" (integration.genResponsibilityVerifyCue firstFeat);
-            in ''
-            mkdir -p integration-test
-            cp ${inputCue} integration-test/input.cue
-            cp ${self}/spec/ci/integration/verify/01-responsibility/expected.cue integration-test/
-            cp ${self}/spec/ci/integration/verify/01-responsibility/test.cue integration-test/
-            
-            cd integration-test
-            ${cue-v15}/bin/cue vet .
-          '';
-          
-          installPhase = ''
-            mkdir -p $out
-            echo "verify-success" > $out/result
-          '';
-        };
-        
-        # Tier 2: Negative (異常系) - Inject forbidden field and detect
-        packages.integration-negative-dod1 = pkgs.stdenv.mkDerivation {
-          name = "integration-negative-dod1";
-          src = self;
-          buildInputs = [ cue-v15 ];
-          
-          buildPhase =
-            let
-              # Use first feat + inject contractOverride
-              feats = integration.extractAllFeats;
-              firstFeat = builtins.head feats;
-              inputCue = pkgs.writeText "input.cue" (integration.genResponsibilityNegativeCue firstFeat);
-            in ''
-            mkdir -p integration-test
-            cp ${inputCue} integration-test/input.cue
-            cp ${self}/spec/ci/integration/negative/01-responsibility/expected.cue integration-test/
-            cp ${self}/spec/ci/integration/negative/01-responsibility/test.cue integration-test/
-            
-            cd integration-test
-            ${cue-v15}/bin/cue vet .
-          '';
-          
-          installPhase = ''
-            mkdir -p $out
-            echo "negative-success" > $out/result
-          '';
-        };
-        
-        # DoD3: Outputs Manifest Integration Tests
-        
-        # Tier 1: Verify (正常系) - manifest.cue vs self.spec一致確認
-        packages.integration-verify-dod3 = pkgs.stdenv.mkDerivation {
-          name = "integration-verify-dod3";
-          src = self;
-          buildInputs = [ cue-v15 ];
-          
-          buildPhase =
-            let
-              # Extract manifest and spec keys
-              manifest = integration.extractManifest;
-              specKeys = integration.extractSpecKeys self.spec;
-              inputCue = pkgs.writeText "input.cue" (integration.genOutputsManifestVerifyCue manifest specKeys);
-            in ''
-            mkdir -p integration-test
-            cp ${inputCue} integration-test/input.cue
-            cp ${self}/spec/ci/integration/verify/03-outputs-manifest/expected.cue integration-test/
-            cp ${self}/spec/ci/integration/verify/03-outputs-manifest/test.cue integration-test/
-            
-            cd integration-test
-            ${cue-v15}/bin/cue vet .
-          '';
-          
-          installPhase = ''
-            mkdir -p $out
-            echo "verify-success" > $out/result
-          '';
-        };
-        
-        # Tier 2: Negative (異常系) - 欠落検出確認
-        packages.integration-negative-dod3 = pkgs.stdenv.mkDerivation {
-          name = "integration-negative-dod3";
-          src = self;
-          buildInputs = [ cue-v15 ];
-          
-          buildPhase =
-            let
-              # Extract manifest and spec keys, inject missing path
-              manifest = integration.extractManifest;
-              specKeys = integration.extractSpecKeys self.spec;
-              missingPath = "spec.cuePath";
-              inputCue = pkgs.writeText "input.cue" (integration.genOutputsManifestNegativeCue manifest specKeys missingPath);
-            in ''
-            mkdir -p integration-test
-            cp ${inputCue} integration-test/input.cue
-            cp ${self}/spec/ci/integration/negative/03-outputs-manifest/expected.cue integration-test/
-            cp ${self}/spec/ci/integration/negative/03-outputs-manifest/test.cue integration-test/
-            
-            cd integration-test
-            ${cue-v15}/bin/cue vet .
-          '';
-          
-          installPhase = ''
-            mkdir -p $out
-            echo "negative-success" > $out/result
-          '';
-        };
+        # ✅ Phase 8: Integration tests - Reference checks (no duplication)
+        packages.integration-verify-dod1 = self.checks.${system}.integration-verify-dod1;
+        packages.integration-negative-dod1 = self.checks.${system}.integration-negative-dod1;
+        packages.integration-verify-dod2 = self.checks.${system}.integration-verify-dod2;
+        packages.integration-negative-dod2 = self.checks.${system}.integration-negative-dod2;
+        packages.integration-verify-dod3 = self.checks.${system}.integration-verify-dod3;
+        packages.integration-negative-dod3 = self.checks.${system}.integration-negative-dod3;
+        packages.integration-verify-dod4 = self.checks.${system}.integration-verify-dod4;
+        packages.integration-negative-dod4 = self.checks.${system}.integration-negative-dod4;
 
         # Check definitions (SSOT for CI)
         # Note: TDD-RED checks removed - use packages.verify-red-* instead
-        checks = checks-defs;
+        checks = checks-defs // {
+          # Phase 0: Meta-DoD checks (9 bugs + U1-U2 fixes)
+          dod0-factory-only = import ./nix/checks/dod0-factory-only.nix { inherit pkgs self; };
+          dod0-flake-srp = import ./nix/checks/dod0-flake-srp.nix { inherit pkgs self; };
+          dod8-patterns-ssot = import ./nix/checks/dod8-patterns-ssot.nix { inherit pkgs self; };
+          
+          # Phase 8: DoD7 - Integration test duplication detection
+          dod7-no-integration-duplication = import ./nix/checks/dod7-no-integration-duplication.nix { inherit pkgs self; };
+        };
+        
+        # Expose lib for external use and testing
+        lib = {
+          inherit builders;
+        };
       }
     ) // {
       # **重要: spec/ を flake outputs として露出**

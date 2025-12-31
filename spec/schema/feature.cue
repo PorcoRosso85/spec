@@ -7,7 +7,7 @@ package schema
 #Feature: {
 	// slug（kebab-case、repo名と一致）
 	slug: string
-	slug: =~"^[a-z0-9]+(-[a-z0-9]+)*$"
+	slug: =~#Patterns.kebabCase.pattern
 
 	// id は slug から自動導出（DRY保証）
 	id: "urn:feat:\(slug)"
