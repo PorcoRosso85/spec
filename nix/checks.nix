@@ -482,4 +482,59 @@ featChecks // {
       echo "negative-success" > $out/result
     '';
   };
+  
+  # DoD3: Outputs Manifest Integration
+  
+  integration-verify-dod3 = pkgs.stdenv.mkDerivation {
+    name = "integration-verify-dod3";
+    src = self;
+    buildInputs = [ cue ];
+    
+    buildPhase =
+      let
+        manifest = integration.extractManifest;
+        specKeys = integration.extractSpecKeys self.spec;
+        inputCue = pkgs.writeText "input.cue" (integration.genOutputsManifestVerifyCue manifest specKeys);
+      in ''
+      mkdir -p integration-test
+      cp ${inputCue} integration-test/input.cue
+      cp ${self}/spec/ci/integration/verify/03-outputs-manifest/expected.cue integration-test/
+      cp ${self}/spec/ci/integration/verify/03-outputs-manifest/test.cue integration-test/
+      
+      cd integration-test
+      ${cue}/bin/cue vet .
+    '';
+    
+    installPhase = ''
+      mkdir -p $out
+      echo "verify-success" > $out/result
+    '';
+  };
+  
+  integration-negative-dod3 = pkgs.stdenv.mkDerivation {
+    name = "integration-negative-dod3";
+    src = self;
+    buildInputs = [ cue ];
+    
+    buildPhase =
+      let
+        manifest = integration.extractManifest;
+        specKeys = integration.extractSpecKeys self.spec;
+        missingPath = "spec.cuePath";
+        inputCue = pkgs.writeText "input.cue" (integration.genOutputsManifestNegativeCue manifest specKeys missingPath);
+      in ''
+      mkdir -p integration-test
+      cp ${inputCue} integration-test/input.cue
+      cp ${self}/spec/ci/integration/negative/03-outputs-manifest/expected.cue integration-test/
+      cp ${self}/spec/ci/integration/negative/03-outputs-manifest/test.cue integration-test/
+      
+      cd integration-test
+      ${cue}/bin/cue vet .
+    '';
+    
+    installPhase = ''
+      mkdir -p $out
+      echo "negative-success" > $out/result
+    '';
+  };
 }
