@@ -1,17 +1,18 @@
 // DoD4: 重複なし - GREENテスト
 // Purpose: detector.Uniq が重複を正しく検出することを検証
 // GREEN段階: reportは計算結果、expectedと一致を確認
+// Note: Uses 'testInput' to avoid CUE scope resolution issues with 'input: input'
 
 package green_04_uniq
 
 import "github.com/porcorosso85/spec-repo/spec/ci/detector"
 
-// Alias input to avoid name collision
-_input: input
+// Rename to avoid scope collision (testInput instead of input)
+testInput: input
 
 // Run detector
 _detector: detector.#Uniq & {
-	input: _input
+	input: testInput
 }
 
 // Verify report matches expected

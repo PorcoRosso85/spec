@@ -4,6 +4,8 @@
 
 package detector
 
+import "list"
+
 #ConsumerAPIInput: {
 	// Required minimum API attributes
 	required: [...string]
@@ -17,8 +19,26 @@ package detector
 	extraAttributes:   [...string] // Provided but not required (warning)
 }
 
-ConsumerAPI: {
-	input:  #ConsumerAPIInput
-	report: _|_ // RED段階: 未実装（必ず落とす）
-	// GREEN段階: 実装により差分検出ロジックを入れる
+#ConsumerAPI: {
+	input!:  #ConsumerAPIInput
+	report: #ConsumerAPIReport & {
+		// Missing attributes: required but not in actual
+		missingAttributes: [
+			for attr in input.required
+			if !list.Contains(input.actual, attr) {
+				attr
+			},
+		]
+		
+		// Extra attributes: in actual but not in required
+		extraAttributes: [
+			for attr in input.actual
+			if !list.Contains(input.required, attr) {
+				attr
+			},
+		]
+	}
 }
+
+// Backward compatibility alias
+ConsumerAPI: #ConsumerAPI

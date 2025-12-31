@@ -34,6 +34,9 @@
           ];
         };
         
+        # Integration test utilities (Phase 6)
+        integration = import ./nix/lib/integration.nix { inherit pkgs self cue; };
+        
         checks-defs = import ./nix/checks.nix { inherit pkgs self cue; };
       in
       {
@@ -171,6 +174,71 @@
           installPhase = ''
             mkdir -p $out
             echo "unreachable" > $out/result
+          '';
+        };
+        
+        # Phase 6: Integration Verification (実データ接続の検証)
+        # 2-tier structure: Verify (clean) + Negative (malicious detection)
+        
+        # Tier 1: Verify (正常系) - spec-repo実体がクリーンであることを確認
+        packages.integration-verify-dod4 = pkgs.stdenv.mkDerivation {
+          name = "integration-verify-dod4";
+          src = self;
+          buildInputs = [ cue ];
+          
+          buildPhase =
+            let
+              # Extract all feats and generate clean CUE
+              feats = integration.extractAllFeats;
+              inputCue = pkgs.writeText "input.cue" (integration.genFeatListVerifyCue feats);
+            in ''
+            echo "🔍 Integration-Verify: DoD4 (実データがクリーン)"
+            echo "Expected: SUCCESS (no duplicates in spec/urn/feat/*)"
+            
+            # Copy integration test files
+            mkdir -p integration-test
+            cp ${inputCue} integration-test/input.cue
+            cp ${self}/spec/ci/integration/verify/04-uniq/expected.cue integration-test/
+            cp ${self}/spec/ci/integration/verify/04-uniq/test.cue integration-test/
+            
+            cd integration-test
+            ${cue}/bin/cue vet .
+          '';
+          
+          installPhase = ''
+            mkdir -p $out
+            echo "verify-success" > $out/result
+          '';
+        };
+        
+        # Tier 2: Negative (悪性検出) - 配線の実効性確認
+        packages.integration-negative-dod4 = pkgs.stdenv.mkDerivation {
+          name = "integration-negative-dod4";
+          src = self;
+          buildInputs = [ cue ];
+          
+          buildPhase =
+            let
+              # Extract all feats and generate CUE with duplicate (malicious)
+              feats = integration.extractAllFeats;
+              inputCue = pkgs.writeText "input.cue" (integration.genFeatListNegativeCue feats);
+            in ''
+            echo "🔍 Integration-Negative: DoD4 (悪性注入→検出確認)"
+            echo "Expected: SUCCESS (duplicate detected correctly)"
+            
+            # Copy integration test files
+            mkdir -p integration-test
+            cp ${inputCue} integration-test/input.cue
+            cp ${self}/spec/ci/integration/negative/04-uniq/expected.cue integration-test/
+            cp ${self}/spec/ci/integration/negative/04-uniq/test.cue integration-test/
+            
+            cd integration-test
+            ${cue}/bin/cue vet .
+          '';
+          
+          installPhase = ''
+            mkdir -p $out
+            echo "negative-success" > $out/result
           '';
         };
 

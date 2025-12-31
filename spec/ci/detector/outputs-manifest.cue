@@ -4,6 +4,8 @@
 
 package detector
 
+import "list"
+
 #OutputsManifestInput: {
 	// Expected outputs structure (from manifest.cue)
 	expected: {
@@ -24,8 +26,29 @@ package detector
 	versionMismatch: bool
 }
 
-OutputsManifest: {
-	input:  #OutputsManifestInput
-	report: _|_ // RED段階: 未実装（必ず落とす）
-	// GREEN段階: 実装により差分検出ロジックを入れる
+#OutputsManifest: {
+	input!:  #OutputsManifestInput
+	report: #OutputsManifestReport & {
+		// Missing paths: in expected but not in actual
+		missingPaths: [
+			for path in input.expected.paths
+			if !list.Contains(input.actual.paths, path) {
+				path
+			},
+		]
+		
+		// Unexpected paths: in actual but not in expected
+		unexpectedPaths: [
+			for path in input.actual.paths
+			if !list.Contains(input.expected.paths, path) {
+				path
+			},
+		]
+		
+		// Version mismatch
+		versionMismatch: input.expected.version != input.actual.version
+	}
 }
+
+// Backward compatibility alias
+OutputsManifest: #OutputsManifest

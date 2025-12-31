@@ -33,8 +33,37 @@ package detector
 	}]
 }
 
-Responsibility: {
-	input:  #ResponsibilityInput
-	report: _|_ // RED段階: 未実装（必ず落とす）
-	// GREEN段階: 実装により禁止責務検出ロジックを入れる
+#Responsibility: {
+	input!:  #ResponsibilityInput
+	report: #ResponsibilityReport & {
+		violations: [
+			// Check for contract override
+			if (input.feat.contractOverride & {}) != _|_ {
+				{
+					category: "contract-override"
+					field:    "contractOverride"
+					message:  "Feat must not redefine contracts"
+				}
+			},
+			// Check for schema override
+			if (input.feat.schemaOverride & {}) != _|_ {
+				{
+					category: "schema-override"
+					field:    "schemaOverride"
+					message:  "Feat must not inject custom schemas"
+				}
+			},
+			// Check for export override
+			if (input.feat.exportOverride & {}) != _|_ {
+				{
+					category: "export-override"
+					field:    "exportOverride"
+					message:  "Feat must not override exports"
+				}
+			},
+		]
+	}
 }
+
+// Backward compatibility alias
+Responsibility: #Responsibility
