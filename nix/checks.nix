@@ -19,6 +19,9 @@
 { pkgs, self, cue }:
 
 let
+  # Integration test utilities (Phase 6)
+  integration = import ./lib/integration.nix { inherit pkgs self cue; };
+  
   # Per-feat derivation splitting for parallel validation
   featDirs = builtins.attrNames (builtins.readDir (self + "/spec/urn/feat"));
   
@@ -309,7 +312,178 @@ featChecks // {
       mkdir -p $out && echo "ok" > $out/result
     '';
   
-  # TDD-GREEN checks (future)
-  # Note: RED verification moved to flake packages.verify-red-*
-  # These checks will contain GREEN implementations after review approval
+  # Phase 5: TDD Unit GREEN checks (DoD1-4 detector契約検証)
+  # Design: fixture入力でdetectorが正しく動作することを検証
+  # Note: RED verification は packages.verify-red-* に分離済み
+  
+  unit-green-dod1 = pkgs.runCommand "unit-green-dod1"
+    {
+      buildInputs = [ cue ];
+    }
+    ''
+      set -euo pipefail
+      cd ${self}
+      
+      echo "✅ Unit GREEN: DoD1 (責務配分3カテゴリ)"
+      ${cue}/bin/cue vet ./spec/ci/tdd/green/01-responsibility/...
+      
+      mkdir -p $out && echo "ok" > $out/result
+    '';
+  
+  unit-green-dod2 = pkgs.runCommand "unit-green-dod2"
+    {
+      buildInputs = [ cue ];
+    }
+    ''
+      set -euo pipefail
+      cd ${self}
+      
+      echo "✅ Unit GREEN: DoD2 (consumer API)"
+      ${cue}/bin/cue vet ./spec/ci/tdd/green/02-consumer-api/...
+      
+      mkdir -p $out && echo "ok" > $out/result
+    '';
+  
+  unit-green-dod3 = pkgs.runCommand "unit-green-dod3"
+    {
+      buildInputs = [ cue ];
+    }
+    ''
+      set -euo pipefail
+      cd ${self}
+      
+      echo "✅ Unit GREEN: DoD3 (outputs manifest)"
+      ${cue}/bin/cue vet ./spec/ci/tdd/green/03-outputs-manifest/...
+      
+      mkdir -p $out && echo "ok" > $out/result
+    '';
+  
+  unit-green-dod4 = pkgs.runCommand "unit-green-dod4"
+    {
+      buildInputs = [ cue ];
+    }
+    ''
+      set -euo pipefail
+      cd ${self}
+      
+      echo "✅ Unit GREEN: DoD4 (重複なし)"
+      ${cue}/bin/cue vet ./spec/ci/tdd/green/04-uniq/...
+      
+      mkdir -p $out && echo "ok" > $out/result
+    '';
+  
+  # Phase 6: Integration checks (実データ接続検証)
+  # Design: spec-repo実体（spec/urn/feat/*, self.spec等）を入力として検証
+  # Note: verify=クリーン検証, negative=悪性検出検証（両方とも成功=PASS）
+  
+  integration-verify-dod4 = pkgs.stdenv.mkDerivation {
+    name = "integration-verify-dod4";
+    src = self;
+    buildInputs = [ cue ];
+    
+    buildPhase =
+      let
+        feats = integration.extractAllFeats;
+        inputCue = pkgs.writeText "input.cue" (integration.genFeatListVerifyCue feats);
+      in ''
+      echo "✅ Integration Verify: DoD4 (実データクリーン)"
+      
+      mkdir -p integration-test
+      cp ${inputCue} integration-test/input.cue
+      cp ${self}/spec/ci/integration/verify/04-uniq/expected.cue integration-test/
+      cp ${self}/spec/ci/integration/verify/04-uniq/test.cue integration-test/
+      
+      cd integration-test
+      ${cue}/bin/cue vet .
+    '';
+    
+    installPhase = ''
+      mkdir -p $out
+      echo "verify-success" > $out/result
+    '';
+  };
+  
+  integration-negative-dod4 = pkgs.stdenv.mkDerivation {
+    name = "integration-negative-dod4";
+    src = self;
+    buildInputs = [ cue ];
+    
+    buildPhase =
+      let
+        feats = integration.extractAllFeats;
+        inputCue = pkgs.writeText "input.cue" (integration.genFeatListNegativeCue feats);
+      in ''
+      echo "✅ Integration Negative: DoD4 (悪性検出)"
+      
+      mkdir -p integration-test
+      cp ${inputCue} integration-test/input.cue
+      cp ${self}/spec/ci/integration/negative/04-uniq/expected.cue integration-test/
+      cp ${self}/spec/ci/integration/negative/04-uniq/test.cue integration-test/
+      
+      cd integration-test
+      ${cue}/bin/cue vet .
+    '';
+    
+    installPhase = ''
+      mkdir -p $out
+      echo "negative-success" > $out/result
+    '';
+  };
+  
+  # DoD2: Consumer API Integration
+  
+  integration-verify-dod2 = pkgs.stdenv.mkDerivation {
+    name = "integration-verify-dod2";
+    src = self;
+    buildInputs = [ cue ];
+    
+    buildPhase =
+      let
+        specKeys = integration.extractSpecKeys self.spec;
+        inputCue = pkgs.writeText "input.cue" (integration.genConsumerAPIVerifyCue specKeys);
+      in ''
+      echo "✅ Integration Verify: DoD2 (self.spec完全性)"
+      
+      mkdir -p integration-test
+      cp ${inputCue} integration-test/input.cue
+      cp ${self}/spec/ci/integration/verify/02-consumer-api/expected.cue integration-test/
+      cp ${self}/spec/ci/integration/verify/02-consumer-api/test.cue integration-test/
+      
+      cd integration-test
+      ${cue}/bin/cue vet .
+    '';
+    
+    installPhase = ''
+      mkdir -p $out
+      echo "verify-success" > $out/result
+    '';
+  };
+  
+  integration-negative-dod2 = pkgs.stdenv.mkDerivation {
+    name = "integration-negative-dod2";
+    src = self;
+    buildInputs = [ cue ];
+    
+    buildPhase =
+      let
+        specKeys = integration.extractSpecKeys self.spec;
+        missingKey = "spec.urn.envPath";
+        inputCue = pkgs.writeText "input.cue" (integration.genConsumerAPINegativeCue specKeys missingKey);
+      in ''
+      echo "✅ Integration Negative: DoD2 (欠落検出)"
+      
+      mkdir -p integration-test
+      cp ${inputCue} integration-test/input.cue
+      cp ${self}/spec/ci/integration/negative/02-consumer-api/expected.cue integration-test/
+      cp ${self}/spec/ci/integration/negative/02-consumer-api/test.cue integration-test/
+      
+      cd integration-test
+      ${cue}/bin/cue vet .
+    '';
+    
+    installPhase = ''
+      mkdir -p $out
+      echo "negative-success" > $out/result
+    '';
+  };
 }
