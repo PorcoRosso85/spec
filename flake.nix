@@ -302,6 +302,64 @@
           '';
         };
         
+        # DoD1: Responsibility Integration Tests
+        
+        # Tier 1: Verify (正常系) - Real feats have no forbidden fields
+        packages.integration-verify-dod1 = pkgs.stdenv.mkDerivation {
+          name = "integration-verify-dod1";
+          src = self;
+          buildInputs = [ cue-v15 ];
+          
+          buildPhase =
+            let
+              # Extract first feat as representative (all feats are clean)
+              feats = integration.extractAllFeats;
+              firstFeat = builtins.head feats;
+              inputCue = pkgs.writeText "input.cue" (integration.genResponsibilityVerifyCue firstFeat);
+            in ''
+            mkdir -p integration-test
+            cp ${inputCue} integration-test/input.cue
+            cp ${self}/spec/ci/integration/verify/01-responsibility/expected.cue integration-test/
+            cp ${self}/spec/ci/integration/verify/01-responsibility/test.cue integration-test/
+            
+            cd integration-test
+            ${cue-v15}/bin/cue vet .
+          '';
+          
+          installPhase = ''
+            mkdir -p $out
+            echo "verify-success" > $out/result
+          '';
+        };
+        
+        # Tier 2: Negative (異常系) - Inject forbidden field and detect
+        packages.integration-negative-dod1 = pkgs.stdenv.mkDerivation {
+          name = "integration-negative-dod1";
+          src = self;
+          buildInputs = [ cue-v15 ];
+          
+          buildPhase =
+            let
+              # Use first feat + inject contractOverride
+              feats = integration.extractAllFeats;
+              firstFeat = builtins.head feats;
+              inputCue = pkgs.writeText "input.cue" (integration.genResponsibilityNegativeCue firstFeat);
+            in ''
+            mkdir -p integration-test
+            cp ${inputCue} integration-test/input.cue
+            cp ${self}/spec/ci/integration/negative/01-responsibility/expected.cue integration-test/
+            cp ${self}/spec/ci/integration/negative/01-responsibility/test.cue integration-test/
+            
+            cd integration-test
+            ${cue-v15}/bin/cue vet .
+          '';
+          
+          installPhase = ''
+            mkdir -p $out
+            echo "negative-success" > $out/result
+          '';
+        };
+        
         # DoD3: Outputs Manifest Integration Tests
         
         # Tier 1: Verify (正常系) - manifest.cue vs self.spec一致確認

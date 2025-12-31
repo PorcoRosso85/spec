@@ -483,6 +483,60 @@ featChecks // {
     '';
   };
   
+  # DoD1: Responsibility Integration
+  
+  integration-verify-dod1 = pkgs.stdenv.mkDerivation {
+    name = "integration-verify-dod1";
+    src = self;
+    buildInputs = [ cue ];
+    
+    buildPhase =
+      let
+        feats = integration.extractAllFeats;
+        firstFeat = builtins.head feats;
+        inputCue = pkgs.writeText "input.cue" (integration.genResponsibilityVerifyCue firstFeat);
+      in ''
+      mkdir -p integration-test
+      cp ${inputCue} integration-test/input.cue
+      cp ${self}/spec/ci/integration/verify/01-responsibility/expected.cue integration-test/
+      cp ${self}/spec/ci/integration/verify/01-responsibility/test.cue integration-test/
+      
+      cd integration-test
+      ${cue}/bin/cue vet .
+    '';
+    
+    installPhase = ''
+      mkdir -p $out
+      echo "verify-success" > $out/result
+    '';
+  };
+  
+  integration-negative-dod1 = pkgs.stdenv.mkDerivation {
+    name = "integration-negative-dod1";
+    src = self;
+    buildInputs = [ cue ];
+    
+    buildPhase =
+      let
+        feats = integration.extractAllFeats;
+        firstFeat = builtins.head feats;
+        inputCue = pkgs.writeText "input.cue" (integration.genResponsibilityNegativeCue firstFeat);
+      in ''
+      mkdir -p integration-test
+      cp ${inputCue} integration-test/input.cue
+      cp ${self}/spec/ci/integration/negative/01-responsibility/expected.cue integration-test/
+      cp ${self}/spec/ci/integration/negative/01-responsibility/test.cue integration-test/
+      
+      cd integration-test
+      ${cue}/bin/cue vet .
+    '';
+    
+    installPhase = ''
+      mkdir -p $out
+      echo "negative-success" > $out/result
+    '';
+  };
+  
   # DoD3: Outputs Manifest Integration
   
   integration-verify-dod3 = pkgs.stdenv.mkDerivation {
