@@ -1,184 +1,144 @@
-# spec
+# spec-repo
 
-Repository for system specifications with 3-SSOT guard enforcement.
+TDD-based specification repository with DoD (Definition of Done) validation.
 
-## Quick Start: Adding New Responsibilities
-
-This repository enforces a 3-step process for any structural change:
-
-### 1. Catalog → Define the responsibility slot
-
-Add a new slot to `docs/catalog/slots/*.cue`:
-
-```cue
-slots: {
-  "custom.my-new-feature": schema.#Slot & {
-    id:             "custom.my-new-feature"
-    responsibility: "Single-sentence description of what this does"
-    status:         "abstract"  // Start as abstract
-    tier:           "app"       // or "business" / "infra"
-    dependsOn: []
-    standardRef: []
-  }
-}
-```
-
-### 2. ADR → Justify and activate
-
-Create `docs/adr/adr-NNNN.cue` to activate the slot:
-
-```cue
-package adr
-
-adrNNNN: {
-  id:    "NNNN"
-  title: "Activate my-new-feature"
-  status: "accepted"
-  date:  "2025-11-03"
-
-  background: """
-    Why this responsibility is needed...
-    """
-
-  decision: """
-    We are activating custom.my-new-feature...
-    """
-
-  activations: [{
-    slotId:    "custom.my-new-feature"
-    owner:     "your-name"
-    placement: "apps/my-feature/"
-    rationale: "Placement justification..."
-  }]
-}
-```
-
-### 3. Skeleton → Declare placement (Auto-generated)
-
-**Option A: Automatic (Recommended)**
-
-Run the generator:
-
-```bash
-./scripts/gen_skeleton_from_adr.sh
-```
-
-This reads all ADR activations and generates `skeleton.generated.json`. Review and apply:
-
-```bash
-cp docs/structure/.gen/skeleton.generated.json docs/structure/.gen/skeleton.json
-git add docs/structure/.gen/skeleton.json
-```
-
-**Option B: Manual**
-
-Update `docs/structure/.gen/skeleton.json` directly:
-
-```json
-{
-  "custom.my-new-feature": "apps/my-feature/"
-}
-```
-
-**Now you can add code in `apps/my-feature/`**. Any other location will be rejected by CI.
+**Design**: CUE (SSOT) + Nix (mechanical verification) = Third-party one-command reproducibility.
 
 ---
 
-## Structure
+## Entry Point
 
-- **`docs/catalog/`** - Slot catalog (SSOT #1: what responsibilities exist)
-  - `schema/*.cue` - Slot type definitions
-  - `slots/*.cue` - Actual slot definitions
-  - `slot-catalog.cue` - Aggregated catalog
+```bash
+nix flake check
+```
 
-- **`docs/adr/`** - Architecture Decision Records (SSOT #2: why we use which slots)
-  - `adr-*.cue` - ADRs in CUE format (machine-readable)
-  - `.gen/adr-*.md` - Generated Markdown (DO NOT EDIT)
-
-- **`docs/structure/.gen/`** - Current configuration (SSOT #3: where slots are placed)
-  - `skeleton.json` - Authorized directory placement map
-  - `traceability.json` - Auto-generated traceability (DO NOT EDIT)
-
-- **`scripts/`** - Generation and validation scripts
-  - `gen_skeleton_from_adr.sh` - Generate skeleton.json from ADR activations
-  - `gen_adr_md.sh` - Generate Markdown from CUE ADRs
-  - `gen_traceability.sh` - Generate traceability.json
-  - `check_skeleton_guard.sh` - Validate path authorizations
+**Single command, zero parameters** - Validates all DoD contracts (21 checks).
 
 ---
 
-## CI Validation
+## Writing a New Feature
 
-Every PR is checked by 5 jobs:
+**Location**: `spec/urn/feat/<slug>/feature.cue`
 
-1. **catalog-validate** - Validates slot definitions, dependencies, and naming
-2. **adr-validate** - Validates ADR-skeleton alignment
-3. **skeleton-guard** - Prevents unauthorized directory additions
-4. **skeleton-gen** - Verifies skeleton.json matches ADR activations (observation mode)
-5. **traceability-gen** - Regenerates and validates traceability.json (observation mode)
+**Template**:
+```cue
+package feat
 
-**Phase-0+1**: All checks run in observation mode (`continue-on-error: true`)
+import "github.com/porcorosso85/spec-repo/spec/schema"
 
-**Phase-3**: Enforcement mode - PRs cannot merge if checks fail
+feature: schema.#Feature & {
+	slug: "my-feature"  // Auto-derives id: "urn:feat:my-feature"
+	
+	artifact: repoEnabled: true  // If feature has implementation repo
+}
+```
+
+**Forbidden** (DoD1 validation):
+- `contractOverride` - Features must not redefine contracts
+- `schemaOverride` - Features must not inject custom schemas  
+- `exportOverride` - Features must not override exports
+
+**Validation**:
+```bash
+nix flake check  # Automatically validates DoD1-4
+```
+
+---
+
+## Adding a New DoD
+
+DoDs are validated in two tiers:
+
+1. **Unit (GREEN)**: `spec/ci/tdd/green/<NN-dod-name>/`
+   - `input.cue` - Test fixture (malicious data)
+   - `expected.cue` - Expected detector output
+   - `test.cue` - Detector invocation + validation
+
+2. **Integration (Real Data)**:
+   - **Verify**: `spec/ci/integration/verify/<NN-dod-name>/`
+     - Validates real spec-repo data is clean
+   - **Negative**: `spec/ci/integration/negative/<NN-dod-name>/`
+     - Injects malicious data, confirms detection
+
+**Steps**:
+1. Write detector: `spec/ci/detector/<dod-name>.cue`
+2. Write unit tests (GREEN): Pass with malicious fixture
+3. Add integration functions: `nix/lib/integration.nix`
+4. Register packages: `flake.nix` (verify/negative)
+5. Register checks: `nix/checks.nix`
+6. Verify: `nix flake check`
+
+---
+
+## Forbidden Patterns
+
+**No shell logic in builders**:
+```nix
+# ❌ FORBIDDEN
+if [ -z "$var" ]; then echo "fail"; exit 1; fi
+
+# ✅ ALLOWED
+${cue-v15}/bin/cue vet input.cue test.cue expected.cue && touch $out
+```
+
+**No patches**: Use language/tool features correctly (正攻法のみ).
+
+**No manual documentation**: Documentation is CUE-generated or CUE itself is readable.
+
+---
+
+## DoD Contracts (Current)
+
+| DoD | Responsibility | SSOT |
+|-----|----------------|------|
+| DoD1 | Forbidden responsibility detection | `detector/responsibility.cue` |
+| DoD2 | Minimum consumer API guarantee | `detector/consumer-api.cue` |
+| DoD3 | Outputs manifest consistency | `spec/manifest.cue` |
+| DoD4 | Feature ID uniqueness | `detector/uniq.cue` |
+
+All contracts validated via `nix flake check` (21 checks).
+
+---
+
+## Principles
+
+1. **CUE as SSOT** - All validation logic in CUE
+2. **Nix as executor** - Mechanical verification only (no logic)
+3. **Single entry point** - `nix flake check` for third-party reproducibility
+4. **Verify + Negative** - Both clean state and detection capability tested
+5. **正攻法のみ** - No patches, use tools correctly
 
 ---
 
 ## Local Development
 
-### Install CUE (optional)
-
 ```bash
-curl -fsSL https://cuelang.org/install.sh | sh
-```
+# Full validation (21 checks)
+nix flake check
 
-### Validate locally
+# Individual checks
+nix build .#checks.x86_64-linux.unit-green-dod1
+nix build .#checks.x86_64-linux.integration-verify-dod2
 
-```bash
-# Validate catalog
-cd docs/catalog && cue vet ./...
-
-# Generate skeleton from ADRs
-./scripts/gen_skeleton_from_adr.sh
-
-# Generate ADR Markdown
-./scripts/gen_adr_md.sh
-
-# Generate traceability
-./scripts/gen_traceability.sh
-
-# Check skeleton guard
-./scripts/check_skeleton_guard.sh
+# Smoke/fast validation
+bash scripts/check.sh smoke  # CUE fmt + basic vet
+bash scripts/check.sh fast   # Full CUE contract validation
 ```
 
 ---
 
-## Rules
+## Structure
 
-1. **Never edit `.gen/` files manually** - They are auto-generated by CI
-2. **Always follow the 3-step process** - catalog → ADR → skeleton (auto-generated)
-3. **Use skeleton generator** - `./scripts/gen_skeleton_from_adr.sh` to sync skeleton.json
-4. **One slot = One responsibility** (SRP - Single Responsibility Principle)
-5. **One slot = One owner** - Clear accountability
-6. **No circular dependencies** - Validated by CI
+- `spec/` - CUE specifications (SSOT)
+  - `urn/feat/` - Feature definitions
+  - `schema/` - Type definitions
+  - `ci/detector/` - DoD detectors
+  - `ci/tdd/green/` - Unit tests (GREEN)
+  - `ci/integration/` - Integration tests (verify/negative)
+  - `manifest.cue` - Outputs manifest (DoD3 SSOT)
 
----
+- `nix/` - Nix validation infrastructure
+  - `lib/integration.nix` - Data extraction + CUE generation
+  - `checks.nix` - Check definitions
 
-## Documentation
-
-- [Structure Overview](docs/structure/index.md)
-- [ADR: 3-SSOT System](docs/adr/adr-1人AI体制で壊さず拡張し続ける2.md)
-- [Operations Guide](docs/ops/index.md)
-
----
-
-## Validation
-
-All validation is performed locally via CUE contracts:
-
-```bash
-nix develop -c bash scripts/check.sh smoke  # Basic checks
-nix develop -c bash scripts/check.sh fast   # Full CUE contract validation
-nix develop -c bash scripts/check.sh slow   # Same as fast (CUE vet)
-```
-
-Contract SSOT: `spec/ci/contract/*.cue`
+- `flake.nix` - Entry point + package definitions
