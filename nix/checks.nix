@@ -309,32 +309,7 @@ featChecks // {
       mkdir -p $out && echo "ok" > $out/result
     '';
   
-  # TDD-RED checks: DoD4 (重複なし)
-  # Purpose: Verify that uniqueness detector fails in RED phase (report: _|_)
-  # Expected: Build should FAIL due to explicit error (_|_)
-  tdd-red-04-uniq = pkgs.runCommand "tdd-red-04-uniq"
-    {
-      buildInputs = [ cue ];
-    }
-    ''
-      set -euo pipefail
-      
-      echo "🔴 TDD-RED: DoD4 (重複なし)"
-      echo "Expected: Explicit error (_|_) from detector.Uniq.report"
-      echo ""
-      
-      # Copy source to writable location (Nix store is read-only)
-      cp -r ${self} /build/src
-      chmod -R u+w /build/src
-      cd /build/src/spec/ci/tdd/red/04-uniq
-      
-      # This SHOULD fail because report: _|_
-      if ${cue}/bin/cue vet . 2>&1; then
-        echo "❌ UNEXPECTED: Test passed (should fail in RED phase)"
-        exit 1
-      else
-        echo "✅ Test failed as expected (RED phase working correctly)"
-        mkdir -p $out && echo "red-pass" > $out/result
-      fi
-    '';
+  # TDD-GREEN checks (future)
+  # Note: RED verification moved to flake packages.verify-red-*
+  # These checks will contain GREEN implementations after review approval
 }

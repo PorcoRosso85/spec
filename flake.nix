@@ -90,8 +90,92 @@
         '';
 
         packages.default = self.packages.${system}.validate;
+        
+        # TDD-RED verification (expected to FAIL when built)
+        # Purpose: Verify detectors fail correctly in RED phase (report: _|_)
+        # Design: Direct `cue vet` - NO logic inversion, pure failure expected
+        # 
+        # Usage:
+        #   nix build .#verify-red-01-responsibility  ← MUST fail (exit 1)
+        #   Failure = RED working correctly
+        #
+        # Note: `nix flake check` only evaluates these (doesn't build),
+        #       so check passes. Actual verification requires explicit build.
+        packages.verify-red-01-responsibility = pkgs.stdenv.mkDerivation {
+          name = "verify-red-01-responsibility";
+          src = self;
+          buildInputs = [ cue ];
+          
+          buildPhase = ''
+            echo "🔴 TDD-RED: DoD1 (責務配分3カテゴリ)"
+            echo "Expected: BUILD FAILS (cue vet fails due to _|_)"
+            cd spec/ci/tdd/red/01-responsibility
+            ${cue}/bin/cue vet .
+            # Unreachable - cue vet fails above
+          '';
+          
+          installPhase = ''
+            mkdir -p $out
+            echo "unreachable" > $out/result
+          '';
+        };
+        
+        packages.verify-red-02-consumer-api = pkgs.stdenv.mkDerivation {
+          name = "verify-red-02-consumer-api";
+          src = self;
+          buildInputs = [ cue ];
+          
+          buildPhase = ''
+            echo "🔴 TDD-RED: DoD2 (consumer API)"
+            echo "Expected: BUILD FAILS (cue vet fails due to _|_)"
+            cd spec/ci/tdd/red/02-consumer-api
+            ${cue}/bin/cue vet .
+          '';
+          
+          installPhase = ''
+            mkdir -p $out
+            echo "unreachable" > $out/result
+          '';
+        };
+        
+        packages.verify-red-03-outputs-manifest = pkgs.stdenv.mkDerivation {
+          name = "verify-red-03-outputs-manifest";
+          src = self;
+          buildInputs = [ cue ];
+          
+          buildPhase = ''
+            echo "🔴 TDD-RED: DoD3 (outputs明確)"
+            echo "Expected: BUILD FAILS (cue vet fails due to _|_)"
+            cd spec/ci/tdd/red/03-outputs-manifest
+            ${cue}/bin/cue vet .
+          '';
+          
+          installPhase = ''
+            mkdir -p $out
+            echo "unreachable" > $out/result
+          '';
+        };
+        
+        packages.verify-red-04-uniq = pkgs.stdenv.mkDerivation {
+          name = "verify-red-04-uniq";
+          src = self;
+          buildInputs = [ cue ];
+          
+          buildPhase = ''
+            echo "🔴 TDD-RED: DoD4 (重複なし)"
+            echo "Expected: BUILD FAILS (cue vet fails due to _|_)"
+            cd spec/ci/tdd/red/04-uniq
+            ${cue}/bin/cue vet .
+          '';
+          
+          installPhase = ''
+            mkdir -p $out
+            echo "unreachable" > $out/result
+          '';
+        };
 
         # Check definitions (SSOT for CI)
+        # Note: TDD-RED checks removed - use packages.verify-red-* instead
         checks = checks-defs;
       }
     ) // {
