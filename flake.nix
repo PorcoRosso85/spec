@@ -256,10 +256,6 @@
               specKeys = integration.extractSpecKeys self.spec;
               inputCue = pkgs.writeText "input.cue" (integration.genConsumerAPIVerifyCue specKeys);
             in ''
-            echo "🔍 Integration-Verify: DoD2 (self.spec keys完全)"
-            echo "Expected: SUCCESS (no missing/extra attributes)"
-            
-            # Copy integration test files
             mkdir -p integration-test
             cp ${inputCue} integration-test/input.cue
             cp ${self}/spec/ci/integration/verify/02-consumer-api/expected.cue integration-test/
@@ -288,10 +284,6 @@
               missingKey = "spec.urn.envPath";
               inputCue = pkgs.writeText "input.cue" (integration.genConsumerAPINegativeCue specKeys missingKey);
             in ''
-            echo "🔍 Integration-Negative: DoD2 (欠落注入→検出確認)"
-            echo "Expected: SUCCESS (missing key detected correctly)"
-            
-            # Copy integration test files
             mkdir -p integration-test
             cp ${inputCue} integration-test/input.cue
             cp ${self}/spec/ci/integration/negative/02-consumer-api/expected.cue integration-test/
@@ -343,6 +335,10 @@
 
         # CI チェック
         ciChecksPath = ./spec/ci/checks;
+        
+        # Outputs Manifest (DoD2: Consumer API minimum requirement)
+        # Note: Content validation is DoD3's responsibility
+        outputsManifestPath = ./spec/manifest.cue;
 
         # バージョン情報
         version = self.rev or "dirty";

@@ -442,8 +442,6 @@ featChecks // {
         specKeys = integration.extractSpecKeys self.spec;
         inputCue = pkgs.writeText "input.cue" (integration.genConsumerAPIVerifyCue specKeys);
       in ''
-      echo "✅ Integration Verify: DoD2 (self.spec完全性)"
-      
       mkdir -p integration-test
       cp ${inputCue} integration-test/input.cue
       cp ${self}/spec/ci/integration/verify/02-consumer-api/expected.cue integration-test/
@@ -470,8 +468,6 @@ featChecks // {
         missingKey = "spec.urn.envPath";
         inputCue = pkgs.writeText "input.cue" (integration.genConsumerAPINegativeCue specKeys missingKey);
       in ''
-      echo "✅ Integration Negative: DoD2 (欠落検出)"
-      
       mkdir -p integration-test
       cp ${inputCue} integration-test/input.cue
       cp ${self}/spec/ci/integration/negative/02-consumer-api/expected.cue integration-test/

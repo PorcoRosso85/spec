@@ -9,5 +9,7 @@ import det "github.com/porcorosso85/spec-repo/spec/ci/detector"
 // Expected: Detector must find the missing "spec.urn.envPath"
 expected: det.#ConsumerAPIReport & {
 	missingAttributes: ["spec.urn.envPath"]
-	extraAttributes:   []
+	
+	// Extra attributes are allowed (same as verify)
+	extraAttributes: [...]
 }

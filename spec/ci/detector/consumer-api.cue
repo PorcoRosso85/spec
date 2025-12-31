@@ -6,6 +6,19 @@ package detector
 
 import "list"
 
+// SSOT: Consumer API Minimum Keys
+// These are the minimum attributes that spec-repo MUST provide to consumers
+// Source: Unit test specification (spec/ci/tdd/green/02-consumer-api/input.cue)
+// Note: Integration tests MUST use this SSOT to avoid spec drift
+#ConsumerAPIMinimumKeys: [
+	"spec.cuePath",
+	"spec.schemaPath",
+	"spec.urn.featPath",
+	"spec.urn.envPath",
+	"spec.outputsManifestPath",
+	"spec.version",
+]
+
 #ConsumerAPIInput: {
 	// Required minimum API attributes
 	required: [...string]
