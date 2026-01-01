@@ -40,6 +40,10 @@
         # Integration test utilities (Phase 6)
         integration = import ./nix/lib/integration.nix { inherit pkgs self; cue = cue-v15; };
         
+        # Phase 10: DoD5/DoD6 - feat-repo contract validation
+        dod5FeatInputs = import ./nix/lib/dod5-feat-inputs.nix { inherit pkgs; };
+        dod6ExpectedOutputs = import ./nix/lib/dod6-expected-outputs.nix { inherit pkgs; };
+        
         checks-defs = import ./nix/checks.nix { inherit pkgs self; cue = cue-v15; };
       in
       {
@@ -206,11 +210,31 @@
           
           # Phase 8: DoD7 - Integration test duplication detection
           dod7-no-integration-duplication = import ./nix/checks/dod7-no-integration-duplication.nix { inherit pkgs self; };
+          
+          # Phase 10: DoD5/DoD6 TDD tests (RED state)
+          test-dod5-positive = import ./nix/checks/test-dod5-positive.nix { 
+            inherit pkgs self builders; 
+            inherit dod5FeatInputs; 
+          };
+          test-dod5-negative-verify = import ./nix/checks/test-dod5-negative-verify.nix { 
+            inherit pkgs self builders; 
+            inherit dod5FeatInputs; 
+          };
+          test-dod6-positive = import ./nix/checks/test-dod6-positive.nix { 
+            inherit pkgs self builders; 
+            inherit dod6ExpectedOutputs; 
+          };
+          test-dod6-negative-verify = import ./nix/checks/test-dod6-negative-verify.nix { 
+            inherit pkgs self builders; 
+            inherit dod6ExpectedOutputs; 
+          };
         };
         
         # Expose lib for external use and testing
         lib = {
           inherit builders;
+          inherit dod5FeatInputs;
+          inherit dod6ExpectedOutputs;
         };
       }
     ) // {

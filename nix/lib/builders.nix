@@ -83,7 +83,18 @@ let
       touch $out/negative-verified
     '');
 
+  # Generic test check (for Phase 10+ tests)
+  # Validates shell script and creates simple test derivation
+  mkTestCheck = { name, script }:
+    pkgs.runCommand name {} (validateShellScript ''
+      ${script}
+      
+      # Ensure output file is created
+      touch $out
+    '');
+
 in {
   inherit mkRedVerify mkIntegrationVerify mkIntegrationNegative;
+  inherit mkTestCheck;
   inherit validateShellScript hasInfix;
 }
