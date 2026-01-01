@@ -20,8 +20,11 @@
 let
   # SSOT: Allowed input names for feat-repo
   # NOTE: Assumes feat-repo uses `inputs.spec.url = "..."` (not `spec-repo`)
-  allowedInputs = [ "nixpkgs" "spec" ];
-  
+  allowedInputs = [
+    "nixpkgs"
+    "spec"
+  ];
+
   # Validate flake.lock inputs against allowlist
   #
   # Args:
@@ -30,23 +33,20 @@ let
   # Returns:
   #   { isValid: bool, violations: [string] }
   #
-  # Implementation (RED stub):
-  #   Always returns isValid = true (does not detect violations)
-  #   GREEN phase will implement actual validation
-  checkInputs = lockPath:
+  # Implementation (GREEN):
+  #   Parses flake.lock and validates inputs against allowlist
+  checkInputs =
+    lockPath:
     let
-      # RED stub: Skip actual parsing (assume valid)
-      # GREEN: lockData = builtins.fromJSON (builtins.readFile lockPath);
-      # GREEN: actualInputs = builtins.attrNames (lockData.nodes.root.inputs or {});
-      # GREEN: forbidden = builtins.filter (i: !(builtins.elem i allowedInputs)) actualInputs;
-      
-      # RED: Always pass
-      forbidden = [];
-    in {
-      isValid = forbidden == [];
+      lockData = builtins.fromJSON (builtins.readFile lockPath);
+      actualInputs = builtins.attrNames (lockData.nodes.root.inputs or { });
+      forbidden = builtins.filter (i: !(builtins.elem i allowedInputs)) actualInputs;
+    in
+    {
+      isValid = forbidden == [ ];
       violations = forbidden;
     };
-  
+
   # Create check derivation
   #
   # Args:
@@ -55,30 +55,25 @@ let
   # Returns:
   #   derivation that succeeds if valid, throws if violation detected
   #
-  # Implementation (RED stub):
-  #   Does not throw (allows negative-verify test to fail)
-  #   GREEN phase will add throw logic
-  mkCheck = lockPath:
+  # Implementation (GREEN):
+  #   Validates flake.lock inputs and throws on violation
+  mkCheck =
+    lockPath:
     let
       result = checkInputs lockPath;
     in
-      # RED stub: Always succeed (no throw)
-      pkgs.runCommand "dod5-check" {} ''
-        echo "DoD5 stub: inputs valid (stub always passes)" > $out
+    if result.isValid then
+      pkgs.runCommand "dod5-check" { } ''
+        echo "DoD5: inputs valid" > $out
+      ''
+    else
+      throw ''
+        DoD5 violation: forbidden inputs detected
+          Allowed: ${builtins.concatStringsSep " " allowedInputs}
+          Forbidden: ${builtins.concatStringsSep " " result.violations}
+
+          Fix: Remove forbidden inputs from flake.lock
       '';
-      
-      # GREEN implementation:
-      # if result.isValid
-      # then pkgs.runCommand "dod5-check" {} ''
-      #   echo "DoD5: inputs valid" > $out
-      # ''
-      # else throw ''
-      #   DoD5 violation: forbidden inputs detected
-      #     Allowed: ${toString allowedInputs}
-      #     Forbidden: ${toString result.violations}
-      #     
-      #   Fix: Remove forbidden inputs from flake.lock
-      # '';
 in
 {
   inherit allowedInputs checkInputs mkCheck;

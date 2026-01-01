@@ -6,45 +6,60 @@
     flake-utils.url = "github:numtide/flake-utils";
   };
 
-  outputs = { self, nixpkgs, flake-utils }:
-    flake-utils.lib.eachDefaultSystem (system:
+  outputs =
+    {
+      self,
+      nixpkgs,
+      flake-utils,
+    }:
+    flake-utils.lib.eachDefaultSystem (
+      system:
       let
         pkgs = nixpkgs.legacyPackages.${system};
-        
+
         # CUE v0.15.1 固定（TDD-RED設計の前提）
         cue-v15 = pkgs.buildGoModule rec {
           pname = "cue";
           version = "0.15.1";
-          
+
           src = pkgs.fetchFromGitHub {
             owner = "cue-lang";
             repo = "cue";
             rev = "v${version}";
             hash = "sha256-0DxJK5S1uWR5MbI8VzUxQv+YTwIIm1yK77Td+Qf278I=";
           };
-          
+
           vendorHash = "sha256-ivFw62+pg503EEpRsdGSQrFNah87RTUrRXUSPZMFLG4=";
-          
+
           subPackages = [ "cmd/cue" ];
-          
+
           ldflags = [
             "-s"
             "-w"
             "-X cuelang.org/go/cmd/cue/cmd.version=v${version}"
           ];
         };
-        
+
         # Phase 0: Factory + Validator (Bug 1-9 + U1-U2 fixes)
-        builders = import ./nix/lib/builders.nix { inherit pkgs self; cue = cue-v15; };
-        
+        builders = import ./nix/lib/builders.nix {
+          inherit pkgs self;
+          cue = cue-v15;
+        };
+
         # Integration test utilities (Phase 6)
-        integration = import ./nix/lib/integration.nix { inherit pkgs self; cue = cue-v15; };
-        
+        integration = import ./nix/lib/integration.nix {
+          inherit pkgs self;
+          cue = cue-v15;
+        };
+
         # Phase 10: DoD5/DoD6 - feat-repo contract validation
         dod5FeatInputs = import ./nix/lib/dod5-feat-inputs.nix { inherit pkgs; };
         dod6ExpectedOutputs = import ./nix/lib/dod6-expected-outputs.nix { inherit pkgs; };
-        
-        checks-defs = import ./nix/checks.nix { inherit pkgs self; cue = cue-v15; };
+
+        checks-defs = import ./nix/checks.nix {
+          inherit pkgs self;
+          cue = cue-v15;
+        };
       in
       {
         # 開発環境（CUEツールを含む）
@@ -58,7 +73,7 @@
 
           shellHook = ''
             export PATH="$PWD/scripts:$PATH"
-            
+
             echo "🚀 Spec repo development environment"
             echo ""
             echo "Phase 0 (Smoke):"
@@ -101,13 +116,13 @@
 
         # Expose cue v0.15.1 for external use
         packages.cue = cue-v15;
-        
+
         packages.default = self.packages.${system}.validate;
-        
+
         # TDD-RED verification (expected to FAIL when built)
         # Purpose: Verify detectors fail correctly in RED phase (report: _|_)
         # Design: Direct `cue vet` - NO logic inversion, pure failure expected
-        # 
+        #
         # Usage:
         #   nix build .#verify-red-01-responsibility  ← MUST fail (exit 1)
         #   Failure = RED working correctly
@@ -118,7 +133,7 @@
           name = "verify-red-01-responsibility";
           src = self;
           buildInputs = [ cue-v15 ];
-          
+
           buildPhase = ''
             echo "🔴 TDD-RED: DoD1 (責務配分3カテゴリ)"
             echo "Expected: BUILD FAILS (cue vet fails due to _|_)"
@@ -126,70 +141,70 @@
             ${cue-v15}/bin/cue vet .
             # Unreachable - cue vet fails above
           '';
-          
+
           installPhase = ''
             mkdir -p $out
             echo "unreachable" > $out/result
           '';
         };
-        
+
         packages.verify-red-02-consumer-api = pkgs.stdenv.mkDerivation {
           name = "verify-red-02-consumer-api";
           src = self;
           buildInputs = [ cue-v15 ];
-          
+
           buildPhase = ''
             echo "🔴 TDD-RED: DoD2 (consumer API)"
             echo "Expected: BUILD FAILS (cue vet fails due to _|_)"
             cd spec/ci/tdd/red/02-consumer-api
             ${cue-v15}/bin/cue vet .
           '';
-          
+
           installPhase = ''
             mkdir -p $out
             echo "unreachable" > $out/result
           '';
         };
-        
+
         packages.verify-red-03-outputs-manifest = pkgs.stdenv.mkDerivation {
           name = "verify-red-03-outputs-manifest";
           src = self;
           buildInputs = [ cue-v15 ];
-          
+
           buildPhase = ''
             echo "🔴 TDD-RED: DoD3 (outputs明確)"
             echo "Expected: BUILD FAILS (cue vet fails due to _|_)"
             cd spec/ci/tdd/red/03-outputs-manifest
             ${cue-v15}/bin/cue vet .
           '';
-          
+
           installPhase = ''
             mkdir -p $out
             echo "unreachable" > $out/result
           '';
         };
-        
+
         packages.verify-red-04-uniq = pkgs.stdenv.mkDerivation {
           name = "verify-red-04-uniq";
           src = self;
           buildInputs = [ cue-v15 ];
-          
+
           buildPhase = ''
             echo "🔴 TDD-RED: DoD4 (重複なし)"
             echo "Expected: BUILD FAILS (cue vet fails due to _|_)"
             cd spec/ci/tdd/red/04-uniq
             ${cue-v15}/bin/cue vet .
           '';
-          
+
           installPhase = ''
             mkdir -p $out
             echo "unreachable" > $out/result
           '';
         };
-        
+
         # Phase 6: Integration Verification (実データ接続の検証)
         # 2-tier structure: Verify (clean) + Negative (malicious detection)
-        
+
         # ✅ Phase 8: Integration tests - Reference checks (no duplication)
         packages.integration-verify-dod1 = self.checks.${system}.integration-verify-dod1;
         packages.integration-negative-dod1 = self.checks.${system}.integration-negative-dod1;
@@ -207,29 +222,37 @@
           dod0-factory-only = import ./nix/checks/dod0-factory-only.nix { inherit pkgs self; };
           dod0-flake-srp = import ./nix/checks/dod0-flake-srp.nix { inherit pkgs self; };
           dod8-patterns-ssot = import ./nix/checks/dod8-patterns-ssot.nix { inherit pkgs self; };
-          
+
           # Phase 8: DoD7 - Integration test duplication detection
-          dod7-no-integration-duplication = import ./nix/checks/dod7-no-integration-duplication.nix { inherit pkgs self; };
-          
-          # Phase 10: DoD5/DoD6 TDD tests (RED state)
-          test-dod5-positive = import ./nix/checks/test-dod5-positive.nix { 
-            inherit pkgs self builders; 
-            inherit dod5FeatInputs; 
+          dod7-no-integration-duplication = import ./nix/checks/dod7-no-integration-duplication.nix {
+            inherit pkgs self;
           };
-          test-dod5-negative-verify = import ./nix/checks/test-dod5-negative-verify.nix { 
-            inherit pkgs self builders; 
-            inherit dod5FeatInputs; 
+
+          # Phase 10: DoD5/DoD6 TDD tests - Positive tests (must PASS in both RED and GREEN)
+          test-dod5-positive = import ./nix/checks/test-dod5-positive.nix {
+            inherit pkgs self builders;
+            inherit dod5FeatInputs;
           };
-          test-dod6-positive = import ./nix/checks/test-dod6-positive.nix { 
-            inherit pkgs self builders; 
-            inherit dod6ExpectedOutputs; 
-          };
-          test-dod6-negative-verify = import ./nix/checks/test-dod6-negative-verify.nix { 
-            inherit pkgs self builders; 
-            inherit dod6ExpectedOutputs; 
+          test-dod6-positive = import ./nix/checks/test-dod6-positive.nix {
+            inherit pkgs self builders;
+            inherit dod6ExpectedOutputs;
           };
         };
-        
+
+        # RED-phase checks: Expected to FAIL during RED, PASS during GREEN
+        # Separated from regular checks to avoid breaking CI during RED phase
+        checksRed = {
+          # Phase 10: DoD5/DoD6 Negative-verify tests (FAIL in RED, PASS in GREEN)
+          test-dod5-negative-verify = import ./nix/checks/test-dod5-negative-verify.nix {
+            inherit pkgs self builders;
+            inherit dod5FeatInputs;
+          };
+          test-dod6-negative-verify = import ./nix/checks/test-dod6-negative-verify.nix {
+            inherit pkgs self builders;
+            inherit dod6ExpectedOutputs;
+          };
+        };
+
         # Expose lib for external use and testing
         lib = {
           inherit builders;
@@ -237,7 +260,8 @@
           inherit dod6ExpectedOutputs;
         };
       }
-    ) // {
+    )
+    // {
       # **重要: spec/ を flake outputs として露出**
       # - 他の impl repo が inputs.spec として参照可能
       # - forge 問わず同じ定義を受け取れる
@@ -269,7 +293,7 @@
 
         # CI チェック
         ciChecksPath = ./spec/ci/checks;
-        
+
         # Outputs Manifest (DoD2: Consumer API minimum requirement)
         # Note: Content validation is DoD3's responsibility
         outputsManifestPath = ./spec/manifest.cue;
