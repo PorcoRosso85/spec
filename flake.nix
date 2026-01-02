@@ -248,6 +248,11 @@
             cue = cue-v15;
             checksAttrNames = flakeChecksList;
           };
+
+          # Phase 6: Format independence regression test (確保 requiredChecks formatting で壊れない)
+          repo-cue-format-independence = import ./nix/checks/repo-cue-format-independence.nix {
+            inherit pkgs self system;
+          };
         };
 
         # RED-phase checks: Expected to FAIL during RED, PASS during GREEN
