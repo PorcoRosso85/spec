@@ -72,24 +72,56 @@ grep -n "checksAttrNames\|flakeChecksList" nix/checks/repo-cue-validity.nix
 
 ---
 
-## 実行記録
+## 実行記録（完了版）
 
 | 日時 | タスク | コミット | flake check | 備考 |
 |------|--------|---------|-------------|------|
-| 2026-01-02 | T4.1 | - | - | pending |
-| 2026-01-02 | T4.2 | - | - | pending |
-| 2026-01-02 | T4.3 | - | - | pending |
-| 2026-01-02 | T5.1 | - | - | pending |
-| 2026-01-02 | T5.2 | - | - | pending |
-| 2026-01-02 | T5.3 | - | - | pending |
+| 2026-01-02 | T0: tag整合確認 | - | - | ✅ tag → 499381b |
+| 2026-01-02 | T1: 回帰テスト追加 | - | - | ✅ repo-cue-format-independence |
+| 2026-01-02 | T2: 回帰テストcommit | 0db7ee9→794751b→353701d | ✅ 29 PASS | 3 commits |
+| 2026-01-02 | T3: flake check証拠 | 353701d | ✅ 29 PASS | 基準点確立 |
+| 2026-01-02 | T5.1: コメント整備 | a492d7c | ✅ 29 PASS | 日本語表現改善 |
+| 2026-01-02 | T5.2: 命名確認 | a492d7c | ✅ 29 PASS | 一貫性確認完了 |
+| 2026-01-02 | **Phase 6 完了** | **a492d7c** | **✅ 29 PASS** | **等価リファクタ完了** |
 
 ---
 
-## TDD表（等価リファクタ用）
+## TDD表（等価リファクタ用・完了版）
 
 | テスト名 | 判定基準 | ステータス |
 |----------|----------|------------|
-| flake_check_29_pass | exit 0, 29 checks | ✅ |
-| refactor_semantics_preserving | checks名・FAIL条件が不変 | pending |
-| no_mock_spec_mentions | mock-spec語が混入しない | pending |
-| diff_is_minimal | git diff が意図した範囲 | pending |
+| flake_check_29_pass | exit 0, 29 checks | ✅ CONFIRMED |
+| refactor_semantics_preserving | checks名・FAIL条件が不変 | ✅ CONFIRMED |
+| no_mock_spec_mentions | mock-spec語が混入しない | ✅ CONFIRMED |
+| diff_is_minimal | git diff が意図した範囲 | ✅ CONFIRMED |
+| naming_is_consistent | checksAttrNames/flakeChecksList が適切に分離 | ✅ CONFIRMED |
+
+---
+
+## Phase 6 完了 ✅
+
+**完了日時**: 2026-01-02
+**最終コミット**: a492d7c
+**flake check**: 29 checks, exit 0
+
+### 成果物
+
+1. **回帰テスト**: `repo-cue-format-independence.nix`
+   - requiredChecks のフォーマット非依存性を保証
+   - シングルライン/マルチライン両方で28アイテム検出を検証
+
+2. **WORK_ORDER**: `phase6_work_order.md`
+   - 等価リファクタの進行記録
+   - 今後の参考ドキュメント
+
+3. **コメント改善**: flake.nix の日本語表現を整備
+
+### 維持事項
+
+- **tag**: phase5-freeze-2026-01-02（不変）
+- **flake check**: 29 checks PASS（維持）
+- **spec-repo**: CLEAN 状態を維持
+
+---
+
+**以上**
