@@ -123,6 +123,20 @@
 
         packages.default = self.packages.${system}.validate;
 
+        # Phase 7: CI Requirements Export
+        packages.ci-requirements =
+          pkgs.runCommand "ci-requirements-export"
+            {
+              nativeBuildInputs = [
+                pkgs.bash
+                pkgs.jq
+                pkgs.coreutils
+              ];
+            }
+            ''
+              ${pkgs.bash}/bin/bash ${./scripts/export-ci-requirements.sh} ${./repo.cue} $out
+            '';
+
         # TDD-RED verification (expected to FAIL when built)
         # Purpose: Verify detectors fail correctly in RED phase (report: _|_)
         # Design: Direct `cue vet` - NO logic inversion, pure failure expected
@@ -253,6 +267,25 @@
           repo-cue-format-independence = import ./nix/checks/repo-cue-format-independence.nix {
             inherit pkgs self system;
           };
+
+          # Phase 7.2: CI Requirements Consistency Check
+          ci-requirements-consistency =
+            pkgs.runCommand "ci-requirements-consistency"
+              {
+                nativeBuildInputs = [
+                  pkgs.bash
+                  pkgs.jq
+                  pkgs.coreutils
+                ];
+                ciReq = self.packages.${system}.ci-requirements;
+                dontUnpack = true;
+              }
+              ''
+                cp -r $ciReq ci-requirements
+                ${pkgs.bash}/bin/bash ${./scripts/check-ci-consistency.sh} ${./repo.cue} \
+                  ci-requirements/ci-requirements.json ci-requirements/ci-requirements.sha256
+                touch $out
+              '';
         };
 
         # RED-phase checks: Expected to FAIL during RED, PASS during GREEN
