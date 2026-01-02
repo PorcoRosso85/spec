@@ -110,6 +110,22 @@ pkgs.runCommand "repo-cue-validity"
     echo "✅ All deliverablesRefs exist"
     echo ""
 
+    # Phase 6.9: requiredChecks 差分検知
+    echo "→ Checking requiredChecks stability..."
+    CURRENT_HASH=$(echo "$REQUIRED_CHECKS" | sort | tr '\n' ' ' | sha256sum | cut -d' ' -f1)
+    # Expected hash for Phase 6 (b7ab953): 1e841880918c181f84034b1cfde17e44e575eea937ef899891312f6fac6b436d
+    EXPECTED_HASH="1e841880918c181f84034b1cfde17e44e575eea937ef899891312f6fac6b436d"
+    if [ "$CURRENT_HASH" != "$EXPECTED_HASH" ]; then
+      echo "⚠️  WARNING: requiredChecks hash changed"
+      echo "  Current:  $CURRENT_HASH"
+      echo "  Expected: $EXPECTED_HASH"
+      echo "  This is expected if intentional changes were made."
+      echo "  Update EXPECTED_HASH in repo-cue-validity.nix if this change is intended."
+    else
+      echo "✅ requiredChecks hash matches (stability verified)"
+    fi
+    echo ""
+
     echo "✅ repo-cue-validity PASS"
     mkdir -p $out && echo "ok" > $out/result
   ''
