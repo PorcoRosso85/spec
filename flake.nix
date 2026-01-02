@@ -56,6 +56,10 @@
         dod5FeatInputs = import ./nix/lib/dod5-feat-inputs.nix { inherit pkgs; };
         dod6ExpectedOutputs = import ./nix/lib/dod6-expected-outputs.nix { inherit pkgs; };
 
+        # Phase 5: flakeChecksList - Auto-generated from self.checks (no external command)
+        # Using attrNames for pure, deterministic, no-fragile generation
+        flakeChecksList = builtins.attrNames (self.checks.${system} or { });
+
         checks-defs = import ./nix/checks.nix {
           inherit pkgs self;
           cue = cue-v15;
@@ -236,6 +240,13 @@
           test-dod6-positive = import ./nix/checks/test-dod6-positive.nix {
             inherit pkgs self builders;
             inherit dod6ExpectedOutputs;
+          };
+
+          # Phase 2: repo-cue-validity (Repo DoD - CI要件SSOT成立条件)
+          repo-cue-validity = import ./nix/checks/repo-cue-validity.nix {
+            inherit pkgs self;
+            cue = cue-v15;
+            checksAttrNames = flakeChecksList;
           };
         };
 

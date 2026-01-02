@@ -129,16 +129,26 @@ bash scripts/check.sh fast   # Full CUE contract validation
 
 ## Structure
 
-- `spec/` - CUE specifications (SSOT)
-  - `urn/feat/` - Feature definitions
-  - `schema/` - Type definitions
-  - `ci/detector/` - DoD detectors
-  - `ci/tdd/green/` - Unit tests (GREEN)
-  - `ci/integration/` - Integration tests (verify/negative)
-  - `manifest.cue` - Outputs manifest (DoD3 SSOT)
+- `repo.cue` - **CI要件SSOT（唯一）**
+  - `requiredChecks`: 必須チェック一覧（flake.checks と対照）
+  - `deliverablesRefs`: 必須参照一覧（実装・素材の所在）
+  - **Rule**: CI要件はrepo.cueにのみ記述すること
 
-- `nix/` - Nix validation infrastructure
-  - `lib/integration.nix` - Data extraction + CUE generation
-  - `checks.nix` - Check definitions
+- `spec/` - CUE specifications (素材・実装)
+  - `urn/feat/` - Feature definitions (素材)
+  - `schema/` - Type definitions (素材)
+  - `ci/detector/` - DoD detectors (実装)
+  - `ci/contract/` - Contract definitions (素材)
+  - `ci/tdd/green/` - Unit tests (GREEN) (素材)
+  - `ci/integration/` - Integration tests (verify/negative) (素材)
+  - `ci/checks/` - Check definitions (素材)
+  - `ci/fixtures/` - Test fixtures (素材)
+  - `manifest.cue` - Outputs manifest (素材)
 
-- `flake.nix` - Entry point + package definitions
+- `nix/` - Nix validation infrastructure (具現)
+  - `lib/integration.nix` - Data extraction + CUE generation (具現)
+  - `checks.nix` - Check definitions (具現)
+  - `checks/*.nix` - Individual check implementations (具現)
+
+- `flake.nix` - Entry point + package definitions (具現)
+  - **Rule**: Nixは「具現」のみ。ロジック禁止。
