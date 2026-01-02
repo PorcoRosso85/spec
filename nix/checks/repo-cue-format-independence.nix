@@ -12,10 +12,6 @@ pkgs.runCommand "repo-cue-format-independence"
       pkgs.coreutils
       pkgs.jq
     ];
-
-    passAsFile = [ "resultFile" ];
-
-    resultFile = pkgs.writeText "test-result" "";
   }
   ''
       set -euo pipefail
@@ -110,5 +106,6 @@ pkgs.runCommand "repo-cue-format-independence"
       echo "=== Phase 6 Pre-Test: PASSED ==="
       echo "repo-cue-validity is truly format-independent"
 
-      echo "format-independence: PASS" >> "$resultFile"
+      # Write success marker
+      echo "format-independence: PASS" > "$out"
   ''
