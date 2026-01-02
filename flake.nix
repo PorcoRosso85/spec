@@ -249,7 +249,7 @@
             checksAttrNames = flakeChecksList;
           };
 
-          # Phase 6: Format independence regression test (確保 requiredChecks formatting で壊れない)
+          # Phase 6: Format independence regression test (検証 requiredChecks formatting で壊れないこと)
           repo-cue-format-independence = import ./nix/checks/repo-cue-format-independence.nix {
             inherit pkgs self system;
           };
