@@ -290,6 +290,7 @@
           # Phase 8: feat-sandboxes-validity
           feat-sandboxes-validity = import ./nix/checks/feat-sandboxes-validity.nix {
             inherit pkgs self;
+            cue = cue-v15;
           };
         };
 

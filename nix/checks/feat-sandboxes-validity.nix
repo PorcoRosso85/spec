@@ -2,11 +2,17 @@
 # Phase 8: Validate all repo.cue files in sandboxes/
 # - Auto-discovers sandboxes/<slug>/repo.cue
 # - Validates CUE syntax, requiredChecks not empty, no duplicates, no mock-spec
+# - Validates SRP: closed schema (CI要件データ専用), no import
 # - Single aggregated check (no check name proliferation)
 
-{ pkgs, self }:
+{
+  pkgs,
+  self,
+  cue,
+}:
 let
   sandboxesRoot = self + "/spec/urn/feat/sandboxes";
+  schemaCue = sandboxesRoot + "/schema.cue";
   repo-cue-extract = import ../lib/repo-cue-extract.nix { inherit pkgs; };
   extractBin = repo-cue-extract.extractRequiredChecksBin;
 in
@@ -62,6 +68,25 @@ pkgs.runCommand "feat-sandboxes-validity"
         continue
       fi
       echo "  OK: mock-spec: none"
+
+      if grep -q 'import "' "$REPO_CUE" 2>/dev/null; then
+        echo "  FAIL: import detected (SRP違反: 外部依存の侵入口)"
+        VALIDATION_ERRORS="$VALIDATION_ERRORS$SLUG: import detected"$'\n'
+        continue
+      fi
+      echo "  OK: no import (SRP: CI要件データ専用)"
+
+      if [ -f "${schemaCue}" ]; then
+        if ${cue}/bin/cue vet "${schemaCue}" "$REPO_CUE" 2>/dev/null; then
+          echo "  OK: schema closed (SRP: CI要件データ専用)"
+        else
+          echo "  FAIL: schema validation failed (SRP違反: 許可されていないフィールド)"
+          VALIDATION_ERRORS="$VALIDATION_ERRORS$SLUG: schema validation failed"$'\n'
+          continue
+        fi
+      else
+        echo "  SKIP: schema.cue not found"
+      fi
 
       REQUIRED_CHECKS=$("${extractBin}/bin/extract-required-checks" "$REPO_CUE")
       if [ -z "$REQUIRED_CHECKS" ]; then
