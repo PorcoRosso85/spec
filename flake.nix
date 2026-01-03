@@ -307,6 +307,10 @@
             inherit pkgs self;
             cue = cue-v15;
           };
+          feat-contract-aggregate = import ./nix/checks/feat-contract-aggregate.nix {
+            inherit pkgs self;
+            cue = cue-v15;
+          };
           contract-srp-policy = import ./nix/checks/contract-srp-policy.nix {
             inherit pkgs self;
           };
