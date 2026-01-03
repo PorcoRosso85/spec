@@ -34,6 +34,7 @@ let
       # Phase 6: repo-cue-format-independence (runCommandテスト) も例外追加
       # Phase 8: feat-sandboxes-validity (simple validation script) も例外追加
       # Phase 9: repo.cue abolition tests (contract validation tests) も例外追加
+      # Phase 9: feat-dx-ux tests も例外追加
       dodExceptions = [
         "dod0-factory-only.nix"
         "dod0-flake-srp.nix"
@@ -47,6 +48,7 @@ let
         "no-repo-cue-reference-in-code.nix"
         "spec-repo-contract-validity.nix"
         "feat-sandboxes-contract-aggregate.nix"
+        "feat-contract-aggregate.nix"
         "contract-srp-policy.nix"
       ];
 
