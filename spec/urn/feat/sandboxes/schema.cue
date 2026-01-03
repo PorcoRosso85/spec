@@ -1,8 +1,8 @@
 package sandboxes
 
 # Closed schema for sandbox repo.cue
-# Only CI要件データ (requiredChecks) を許可
-# 余計なフィールドは FAIL (SRP強制)
+# Only CI requiredChecks data is allowed
+# Extra fields will FAIL (SRP enforcement)
 
 Repo: {
 	requiredChecks: [...string]
