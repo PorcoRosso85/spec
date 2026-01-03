@@ -32,6 +32,7 @@ let
       # ✅ DoD自身は例外（これらのファイルは構造検証のためrunCommandを使う）
       # Phase 2: repo-cue-validity もFactoryパターンを使うため例外追加
       # Phase 6: repo-cue-format-independence (runCommandテスト) も例外追加
+      # Phase 8: feat-sandboxes-validity (simple validation script) も例外追加
       dodExceptions = [
         "dod0-factory-only.nix"
         "dod0-flake-srp.nix"
@@ -39,6 +40,7 @@ let
         "dod8-patterns-ssot.nix"
         "repo-cue-validity.nix"
         "repo-cue-format-independence.nix"
+        "feat-sandboxes-validity.nix"
       ];
 
       hasDirectDerivation = builtins.any (p: hasInfix p content) patterns;
