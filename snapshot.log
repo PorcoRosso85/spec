@@ -1,0 +1,53 @@
+./phase6_submission_pack.md:82:| requiredChecks hash | repo.cue | `grep -A100 'requiredChecks:' repo.cue | grep '"' | sort | tr '\n' ' ' | sha256sum` |
+./phase6_submission_pack.md:109:grep -A100 'requiredChecks:' repo.cue | grep '"' | sort | tr '\n' ' ' | sha256sum
+./spec/USAGE.md:152:    repo_file = f"{spec_path}/adapter/git/repo/repo.cue"
+./spec/USAGE.md:222:A: spec repo の `spec/adapter/git/repo/repo.cue` に追加してください:
+./flake.nix:137:              ${pkgs.bash}/bin/bash ${./scripts/export-ci-requirements.sh} ${./repo.cue} $out
+./flake.nix:285:                ${pkgs.bash}/bin/bash ${./scripts/check-ci-consistency.sh} ${./repo.cue} \
+./README.md:132:- `repo.cue` - **CI要件SSOT（唯一）**
+./README.md:135:  - **Rule**: CI要件はrepo.cueにのみ記述すること
+./nix/checks/repo-cue-format-independence.nix:7:  originalRepoCue = self + "/repo.cue";
+./nix/checks/repo-cue-format-independence.nix:22:      echo "Note: Tests modify temporary repo.cue, not the store version"
+./nix/checks/repo-cue-format-independence.nix:25:      cat > repo.cue << 'EOF'
+./nix/checks/repo-cue-format-independence.nix:33:      line=$(grep 'requiredChecks:' repo.cue)
+./nix/checks/repo-cue-format-independence.nix:46:      cat > repo.cue << 'EOF'
+./nix/checks/repo-cue-format-independence.nix:94:      sed -n '/requiredChecks:/,/^  \]/p' repo.cue | grep -o '"[^"]*"' > multi_line_checks.txt
+./nix/checks/repo-cue-validity.nix:24:    # 1. repo.cue exists and is valid CUE
+./nix/checks/repo-cue-validity.nix:25:    echo "→ Checking repo.cue exists and evaluates..."
+./nix/checks/repo-cue-validity.nix:26:    if [ ! -f "./repo.cue" ]; then
+./nix/checks/repo-cue-validity.nix:27:      echo "❌ FAIL: repo.cue not found"
+./nix/checks/repo-cue-validity.nix:31:    ${cue}/bin/cue eval ./repo.cue > /dev/null 2>&1
+./nix/checks/repo-cue-validity.nix:33:      echo "❌ FAIL: repo.cue is not valid CUE"
+./nix/checks/repo-cue-validity.nix:36:    echo "✅ repo.cue exists and is valid"
+./nix/checks/repo-cue-validity.nix:39:    # 2. Extract requiredChecks from repo.cue
+./nix/checks/repo-cue-validity.nix:41:    REQUIRED_CHECKS=$(${cue}/bin/cue export ./repo.cue -e 'repo.requiredChecks' --out json 2>/dev/null | jq -r '.[]' 2>/dev/null || echo "")
+./nix/checks/repo-cue-validity.nix:93:    DELIVERABLES_REFS=$(${cue}/bin/cue export ./repo.cue -e 'repo.deliverablesRefs' --out json 2>/dev/null | jq -r '.[]' 2>/dev/null || echo "")
+./spec/ci/checks/1urn1repo.cue:7:// 1. adapter/git/repo/repo.cue の repos 配列を読み取る
+./spec/ci/checks/repo_consistency.cue:9:// 2. adapter/git/repo/repo.cue の repos 配列から internal URN を収集
+./nix/checks/feat-sandboxes-validity.nix:2:# Phase 8: Validate all repo.cue files in sandboxes/
+./nix/checks/feat-sandboxes-validity.nix:3:# - Auto-discovers sandboxes/<slug>/repo.cue
+./nix/checks/feat-sandboxes-validity.nix:27:    echo "Purpose: Validate all repo.cue in spec/urn/feat/sandboxes/"
+./nix/checks/feat-sandboxes-validity.nix:49:      REPO_CUE="${sandboxesRoot}/$SLUG/repo.cue"
+./nix/checks/feat-sandboxes-validity.nix:52:        echo "SKIP: $SLUG/repo.cue not found"
+./nix/checks/feat-sandboxes-validity.nix:56:      echo "Validating: $SLUG/repo.cue"
+./nix/checks/feat-sandboxes-validity.nix:108:      echo "  OK: $SLUG/repo.cue: PASS"
+./nix/lib/repo-cue-extract.nix:2:# Format-independent extraction of requiredChecks from repo.cue
+./nix/lib/repo-cue-extract.nix:7:#   Usage: extract-required-checks /path/to/repo.cue
+./phase7_work_order.md:4:spec-repo が「CI要件（requiredChecks）を配信物」として公開し、他repoが `repo.cue` を持たなくても CI 要件を参照できる状態にする。
+./phase7_work_order.md:24:1. `repo.cue` から requiredChecks を抽出（Phase 6 で確立したフォーマット非依存方式）
+./phase7_work_order.md:30:- [ ] 生成物が `repo.cue` の requiredChecks と一致する
+./phase7_work_order.md:34:**目的**: 配信物が `repo.cue` と一致することを CI で保証
+./phase7_work_order.md:40:2. `repo.cue` から requiredChecks を抽出
+./phase7_work_order.md:108:sed -n '/requiredChecks:/,/^[[:space:]]*\]/p' repo.cue \
+./phase7_work_order.md:122:- [ ] 配信物が `repo.cue` 由来のみ（外部参照を含まない）
+./phase7_work_order.md:144:| ci_requirements_export_matches_repo_cue | 生成物が repo.cue の requiredChecks と一致 | pending |
+./phase6_9_work_order.md:46:将来、checks を増減したときや repo.cue を変更したときに「requiredChecks の意図せぬ変更」を検知する。
+./phase6_9_work_order.md:55:SHA256=$(grep -A100 'requiredChecks:' repo.cue | grep -B100 '^  \]' | grep '"' | sort | tr '\n' ' ' | sha256sum | cut -d' ' -f1)
+./scripts/check-ci-consistency.sh:4:REPO_CUE="${1:-./repo.cue}"
+./scripts/check-ci-consistency.sh:9:echo "Purpose: Verify ci-requirements.json matches repo.cue"
+./scripts/check-ci-consistency.sh:12:echo "Step 1: Extracting requiredChecks from repo.cue..."
+./scripts/check-ci-consistency.sh:22:echo "  Current repo.cue checks: $CURRENT_CHECKS"
+./scripts/check-ci-consistency.sh:40:	echo "  CONSISTENT: ci-requirements.json matches repo.cue"
+./scripts/check-ci-consistency.sh:42:	echo "  INCONSISTENT: ci-requirements.json does not match repo.cue"
+./scripts/export-ci-requirements.sh:4:REPO_CUE="${1:-./repo.cue}"
+./spec/urn/feat/sandboxes/schema.cue:3:// Schema for sandbox repo.cue

@@ -1,0 +1,24 @@
+[START] spec_contract_source_resolves_stub_override
+[REPO] spec-repo
+[CMD] nix develop -c bash scripts/check.sh slow --override-input /home/nixos/spec-repo/.gen/stub_contract.json
+[OUTPUT] warning: Git tree '/home/nixos/spec-repo' is dirty
+🚀 Spec repo development environment
+
+Phase 0 (Smoke):
+  bash scripts/check.sh smoke  - cue fmt --check + cue vet
+
+Phase 1 (CUE Contract Validation):
+  bash scripts/check.sh fast   - cue vet (CUE契約による全検証)
+  bash scripts/check.sh slow   - cue vet (fast同等)
+
+Utilities:
+  cue eval ./spec/...           - Evaluate all spec definitions
+  cue vet ./spec/...            - Type validation
+
+Spec structure:
+  - schema/: Type definitions
+  - urn/: Internal UR...
+[RESULT] Override executed successfully
+[FAIL] Override should be reflected in output
+
+false !== true

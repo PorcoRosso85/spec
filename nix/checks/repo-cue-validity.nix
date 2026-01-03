@@ -1,0 +1,134 @@
+{
+  pkgs,
+  self,
+  cue,
+  checksAttrNames,
+}:
+
+pkgs.runCommand "repo-cue-validity"
+  {
+    buildInputs = [
+      cue
+      pkgs.jq
+    ];
+    # checksAttrNames is a list of check names passed from flake.nix
+    checksJson = pkgs.writeText "checks.json" (builtins.toJSON checksAttrNames);
+  }
+  ''
+    set -euo pipefail
+    cd ${self}
+
+    echo "🔍 repo-cue-validity check"
+    echo ""
+    echo "NOTE: This check is deprecated. Use spec-repo-contract-validity instead."
+    echo ""
+
+    # 1. contract.cue exists and is valid CUE
+    echo "→ Checking spec/urn/spec-repo/contract.cue exists and evaluates..."
+    CONTRACT_CUE="./spec/urn/spec-repo/contract.cue"
+    if [ ! -f "$CONTRACT_CUE" ]; then
+      echo "❌ FAIL: contract.cue not found"
+      exit 1
+    fi
+
+    ${cue}/bin/cue eval "$CONTRACT_CUE" > /dev/null 2>&1
+    if [ $? -ne 0 ]; then
+      echo "❌ FAIL: contract.cue is not valid CUE"
+      exit 1
+    fi
+    echo "✅ contract.cue exists and is valid"
+    echo ""
+
+    # 2. Extract requiredChecks from contract.cue
+    echo "→ Extracting requiredChecks..."
+    REQUIRED_CHECKS=$(${cue}/bin/cue export "$CONTRACT_CUE" -e 'requiredChecks' --out json 2>/dev/null | jq -r '.[]' 2>/dev/null || echo "")
+    if [ -z "$REQUIRED_CHECKS" ]; then
+      echo "❌ FAIL: requiredChecks not found or empty"
+      exit 1
+    fi
+
+    echo "Found $(echo "$REQUIRED_CHECKS" | wc -l) required checks"
+    echo ""
+
+    # 3. Check for duplicates in requiredChecks
+    echo "→ Checking for duplicates in requiredChecks..."
+    DUPLICATES=$(echo "$REQUIRED_CHECKS" | sort | uniq -d)
+    if [ -n "$DUPLICATES" ]; then
+      echo "❌ FAIL: Duplicate checks found:"
+      echo "$DUPLICATES"
+      exit 1
+    fi
+    echo "✅ No duplicates found"
+    echo ""
+
+    # 4. Get flake checks names from JSON (passed from flake.nix)
+    echo "→ Getting flake checks names..."
+    FLAKE_CHECKS=$(cat "$checksJson" | jq -r '.[]' 2>/dev/null | sort -u || echo "")
+
+    if [ -z "$FLAKE_CHECKS" ]; then
+      echo "⚠️  Could not get flake checks, using empty list"
+      FLAKE_CHECKS=""
+    fi
+
+    echo "Found $(echo "$FLAKE_CHECKS" | wc -l) flake checks"
+    echo ""
+
+    # 5. Verify all requiredChecks exist in flake checks
+    echo "→ Verifying requiredChecks are in flake checks..."
+    MISSING=""
+    for check in $REQUIRED_CHECKS; do
+      if ! echo "$FLAKE_CHECKS" | grep -qx "$check"; then
+        MISSING="$MISSING$check\n"
+        echo "  ❌ Missing: $check"
+      fi
+    done
+
+    if [ -n "$MISSING" ]; then
+      echo ""
+      echo "❌ FAIL: Some requiredChecks not in flake checks"
+      exit 1
+    fi
+    echo "✅ All required checks found in flake"
+    echo ""
+
+    # 6. Check deliverablesRefs paths exist
+    echo "→ Checking deliverablesRefs paths..."
+    DELIVERABLES_REFS=$(${cue}/bin/cue export "$CONTRACT_CUE" -e 'deliverablesRefs' --out json 2>/dev/null | jq -r '.[]' 2>/dev/null || echo "")
+
+    if [ -n "$DELIVERABLES_REFS" ]; then
+      BROKEN=""
+      for ref in $DELIVERABLES_REFS; do
+        if [ ! -e "$ref" ]; then
+          BROKEN="$BROKEN$ref\n"
+          echo "  ❌ Broken ref: $ref"
+        fi
+      done
+
+      if [ -n "$BROKEN" ]; then
+        echo ""
+        echo "❌ FAIL: Some deliverablesRefs are broken"
+        exit 1
+      fi
+    fi
+    echo "✅ All deliverablesRefs exist"
+    echo ""
+
+    # Phase 6.9: requiredChecks 差分検知
+    echo "→ Checking requiredChecks stability..."
+    CURRENT_HASH=$(echo "$REQUIRED_CHECKS" | sort | tr '\n' ' ' | sha256sum | cut -d' ' -f1)
+    # Expected hash for Phase 9 (contract.cue migration): NEW_HASH
+    EXPECTED_HASH="1e841880918c181f84034b1cfde17e44e575eea937ef899891312f6fac6b436d"
+    if [ "$CURRENT_HASH" != "$EXPECTED_HASH" ]; then
+      echo "⚠️  WARNING: requiredChecks hash changed"
+      echo "  Current:  $CURRENT_HASH"
+      echo "  Expected: $EXPECTED_HASH"
+      echo "  This is expected if intentional changes were made."
+      echo "  Update EXPECTED_HASH in repo-cue-validity.nix if this change is intended."
+    else
+      echo "✅ requiredChecks hash matches (stability verified)"
+    fi
+    echo ""
+
+    echo "✅ repo-cue-validity PASS (deprecated - use spec-repo-contract-validity)"
+    mkdir -p $out && echo "ok" > $out/result
+  ''

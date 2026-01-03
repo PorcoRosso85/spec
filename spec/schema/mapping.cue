@@ -5,7 +5,7 @@ package schema
 #FeatExternalMapping: {
 	// 内部機能URN（"urn:feat:..."）
 	internal: string
-	internal: =~"^urn:feat:[a-z0-9-]+$"
+	internal: =~#Patterns.featureURN.pattern
 
 	// 外部標準URN（"urn:ietf:...", "urn:cloudflare:..." 等）
 	external: string

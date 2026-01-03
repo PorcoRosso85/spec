@@ -5,7 +5,7 @@ package schema
 #RepoMapping: {
 	// 内部機能URN（"urn:feat:..."）
 	internal: string
-	internal: =~"^urn:feat:[a-z0-9-]+$"
+	internal: =~#Patterns.featureURN.pattern
 
 	// Git forge（github.com, codeberg.org 等）
 	forge: string
@@ -16,7 +16,7 @@ package schema
 
 	// Repository名（slug と一致すること）
 	repo: string
-	repo: =~"^[a-z0-9]+(-[a-z0-9]+)*$"
+	repo: =~#Patterns.kebabCase.pattern
 }
 
 // #BranchMapping: 機能URN ↔ branch 名規則のマッピング型
@@ -24,11 +24,11 @@ package schema
 #BranchMapping: {
 	// 内部機能URN（"urn:feat:..."）
 	internal: string
-	internal: =~"^urn:feat:[a-z0-9-]+$"
+	internal: =~#Patterns.featureURN.pattern
 
 	// Branch名（slug または slug + "+" + variant）
 	name: string
-	name: =~"^[a-z0-9-]+(\\+[a-z0-9-]+)?$"
+	name: =~#Patterns.branchName.pattern
 
 	// この branch が必須かどうか
 	required: bool

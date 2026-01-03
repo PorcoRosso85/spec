@@ -1,0 +1,19 @@
+{
+  "requiredBindings": [
+    "STUB_BINDING"
+  ],
+  "allowedTools": [
+    "stub_tool"
+  ],
+  "allowedEndpoints": [
+    {
+      "method": "GET",
+      "path": "/stub"
+    }
+  ],
+  "errorShape": {
+    "code": "STUB001",
+    "message": "Stub error",
+    "requestId": "stub-req"
+  }
+}

@@ -7,7 +7,7 @@ package schema
 #Feature: {
 	// slug（kebab-case、repo名と一致）
 	slug: string
-	slug: =~"^[a-z0-9]+(-[a-z0-9]+)*$"
+	slug: =~#Patterns.kebabCase.pattern
 
 	// id は slug から自動導出（DRY保証）
 	id: "urn:feat:\(slug)"
@@ -16,6 +16,9 @@ package schema
 	artifact: {
 		repoEnabled: bool
 	}
+
+	// deps: 依存する他の feature（オプション、循環依存検知用）
+	deps?: [...string]
 
 	// YAGNI: description, purpose, tags などは将来追加
 }

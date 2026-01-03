@@ -1,0 +1,18 @@
+name: ci
+
+on:
+  push:
+    branches: [ "dev", "main" ]
+  pull_request:
+
+jobs:
+  flake-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: DeterminateSystems/nix-installer-action@v12
+      - uses: DeterminateSystems/magic-nix-cache-action@v7
+
+      - name: nix flake check
+        run: nix flake check -L
