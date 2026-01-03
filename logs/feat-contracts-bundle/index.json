@@ -1,0 +1,12 @@
+[
+  {
+    "slug": "decide-ci-score-matrix",
+    "sha256": "d128f5b7989f800e46bcb5217b0992a5cd1551454664f4e8716dc9462a222c8e",
+    "file": "decide-ci-score-matrix/contract.json"
+  },
+  {
+    "slug": "dx-ux-test",
+    "sha256": "d128f5b7989f800e46bcb5217b0992a5cd1551454664f4e8716dc9462a222c8e",
+    "file": "dx-ux-test/contract.json"
+  }
+]

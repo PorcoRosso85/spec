@@ -1,0 +1,419 @@
+warning: Git tree '/home/nixos/spec-repo' is dirty
+evaluating flake...
+checking flake output 'lib'...
+checking flake output 'checks'...
+checking derivation checks.x86_64-linux.integration-verify-dod1...
+derivation evaluated to /nix/store/2xw3almm6c0pm8glnm7bnqg0byb8m36m-integration-verify-dod1.drv
+checking derivation checks.x86_64-linux.integration-negative-dod1...
+derivation evaluated to /nix/store/m8crqkb7mfz7acdfhkn7xyvybpn6ds0y-integration-negative-dod1.drv
+checking derivation checks.x86_64-linux.integration-verify-dod2...
+derivation evaluated to /nix/store/685pf8mpplbmvf530mywrsbaiydzx4hi-integration-verify-dod2.drv
+checking derivation checks.x86_64-linux.integration-negative-dod2...
+derivation evaluated to /nix/store/ca0q8jfwhchf6vj04xar9p6fjgx8zffs-integration-negative-dod2.drv
+checking derivation checks.x86_64-linux.integration-verify-dod3...
+building '/nix/store/ail3ypnvqxjpfq3bxxcf7ya2ngg0rh88-manifest.json.drv'...
+derivation evaluated to /nix/store/z4zvpyj1lixflr9yykxfjnp91whpjybi-integration-verify-dod3.drv
+checking derivation checks.x86_64-linux.integration-negative-dod3...
+derivation evaluated to /nix/store/d34z5hhfz2rjs5zr39psq4hwl67q7742-integration-negative-dod3.drv
+checking derivation checks.x86_64-linux.integration-verify-dod4...
+derivation evaluated to /nix/store/vxcrw8vqkn6m6jmm1679ni3h4vihzdyp-integration-verify-dod4.drv
+checking derivation checks.x86_64-linux.integration-negative-dod4...
+derivation evaluated to /nix/store/lg5hr9bz5k62x790fydps4kjhdgrn8h6-integration-negative-dod4.drv
+checking derivation checks.x86_64-linux.dod0-factory-only...
+derivation evaluated to /nix/store/j1ajcvjqw2sxm53bkq7rbc1kx4ykklmc-dod0-factory-only.drv
+checking derivation checks.x86_64-linux.dod0-flake-srp...
+derivation evaluated to /nix/store/fw3j8phwncax1j7x6i3g9sydrp40dc29-dod0-flake-srp.drv
+checking derivation checks.x86_64-linux.dod8-patterns-ssot...
+derivation evaluated to /nix/store/izn1r50w0000s4k4cqmm09crdjvbymip-dod8-patterns-ssot.drv
+checking derivation checks.x86_64-linux.dod7-no-integration-duplication...
+derivation evaluated to /nix/store/vqmhwncpv1pv1n7v9qcqa26691ngi9m8-dod7-no-integration-duplication.drv
+checking derivation checks.x86_64-linux.test-dod5-positive...
+derivation evaluated to /nix/store/74sjv9cq65jc0q9qzawrgxp38paxg7w7-test-dod5-positive.drv
+checking derivation checks.x86_64-linux.test-dod6-positive...
+derivation evaluated to /nix/store/nkcggv73dl32pjk9278092myw88gs76i-test-dod6-positive.drv
+checking derivation checks.x86_64-linux.repo-cue-validity...
+derivation evaluated to /nix/store/xnkp5xqm733k5qpysj7c12j61bgfklhq-repo-cue-validity.drv
+checking derivation checks.x86_64-linux.repo-cue-format-independence...
+derivation evaluated to /nix/store/278pkaapwn9afcrjj58ww0zvqx793j76-repo-cue-format-independence.drv
+checking derivation checks.x86_64-linux.ci-requirements-consistency...
+derivation evaluated to /nix/store/zn2dj1ag1930483f1d813qs7pbfvwmzj-ci-requirements-consistency.drv
+checking derivation checks.x86_64-linux.feat-sandboxes-validity...
+derivation evaluated to /nix/store/0kmyzbrbm52r99c901x3kg180va9jvk0-feat-sandboxes-validity.drv
+checking derivation checks.x86_64-linux.no-repo-cue-tracked...
+derivation evaluated to /nix/store/45wgan3qk6irvbnbqa5j1gkbmmpn269a-no-repo-cue-tracked.drv
+checking derivation checks.x86_64-linux.no-repo-cue-any...
+derivation evaluated to /nix/store/45pm8nb8bds3y6nq684vy7rcm3n46wjz-no-repo-cue-any.drv
+checking derivation checks.x86_64-linux.no-repo-cue-reference-in-code...
+derivation evaluated to /nix/store/yfxa9swx1npxr5488sfq3ya5645cpq94-no-repo-cue-reference-in-code.drv
+checking derivation checks.x86_64-linux.spec-repo-contract-validity...
+derivation evaluated to /nix/store/4p08wnm19vpyy3sm91qlad2y9hn92mcb-spec-repo-contract-validity.drv
+checking derivation checks.x86_64-linux.feat-sandboxes-contract-aggregate...
+derivation evaluated to /nix/store/6xmnybpmar81lji7y5a6z79f115m2hkg-feat-sandboxes-contract-aggregate.drv
+checking derivation checks.x86_64-linux.feat-contract-aggregate...
+derivation evaluated to /nix/store/m2q22qwjr1ba8pplza2zd8frgd08an13-feat-contract-aggregate.drv
+checking derivation checks.x86_64-linux.contract-srp-policy...
+derivation evaluated to /nix/store/8ix3xasygdgc54v1f6h08x30qrlg9dqa-contract-srp-policy.drv
+checking derivation checks.x86_64-linux.global-uniq-fixtures...
+derivation evaluated to /nix/store/7fj99ja80dd1fkn4kaspz5ih7n4r9cac-global-uniq-fixtures.drv
+checking derivation checks.x86_64-linux.policy-dev-scope...
+derivation evaluated to /nix/store/3nskv2q8imhy2a1mfh0hkch9kwa3jnii-policy-dev-scope.drv
+checking derivation checks.x86_64-linux.spec-smoke...
+derivation evaluated to /nix/store/a9anzgirdwdic71i431ki3scrzxxb2sq-spec-smoke.drv
+checking derivation checks.x86_64-linux.spec-fast...
+derivation evaluated to /nix/store/zqwi2cky671l5kl8lb78g395rvjg260n-spec-fast.drv
+checking derivation checks.x86_64-linux.spec-slow...
+derivation evaluated to /nix/store/92p185c3zyrlms5zmf6s19j5hx1n4d0i-spec-slow.drv
+checking derivation checks.x86_64-linux.spec-unit...
+derivation evaluated to /nix/store/x071ih4k5mxpxvb157pd0jjf9w2s46ga-spec-unit.drv
+checking derivation checks.x86_64-linux.spec-e2e...
+derivation evaluated to /nix/store/kx6iw8kshbivzxwd2j70w60q3dgnl064-spec-e2e.drv
+checking derivation checks.x86_64-linux.unit-green-dod1...
+derivation evaluated to /nix/store/nmxybigl3gpv17l48qh79l73sn3wfgxq-unit-green-dod1.drv
+checking derivation checks.x86_64-linux.unit-green-dod2...
+derivation evaluated to /nix/store/f7wwjy1cmv9wp2hknhf2vvpph6r1bh1i-unit-green-dod2.drv
+checking derivation checks.x86_64-linux.unit-green-dod3...
+derivation evaluated to /nix/store/l7xn940ka7h55ybak7i66xh5x42gw01a-unit-green-dod3.drv
+checking derivation checks.x86_64-linux.unit-green-dod4...
+derivation evaluated to /nix/store/8cg5cndy1nd26q1f5dqmz3x90m3b8qiw-unit-green-dod4.drv
+checking derivation checks.x86_64-linux.feat-decide-ci-score-matrix...
+derivation evaluated to /nix/store/z6bvazmgyv1haf9j505fk8qa6rmb2p39-feat-decide-ci-score-matrix.drv
+checking derivation checks.x86_64-linux.feat-dx-ux-test...
+derivation evaluated to /nix/store/lvpsh2bc5xpvdx90prxza5ch12wms9ln-feat-dx-ux-test.drv
+checking derivation checks.x86_64-linux.feat-spec...
+derivation evaluated to /nix/store/q1vzjr48xqdf9syhl1qkq30ickmg1w2d-feat-spec.drv
+checking flake output 'devShells'...
+checking derivation devShells.x86_64-linux.default...
+derivation evaluated to /nix/store/bz2w66zxv8bapkykvc3x7ppinr9i5vfp-nix-shell.drv
+checking flake output 'packages'...
+checking derivation packages.x86_64-linux.cue...
+derivation evaluated to /nix/store/jdqk1dx0rdj4f83jd79s7nprln79lvsf-cue-0.15.1.drv
+checking derivation packages.x86_64-linux.default...
+derivation evaluated to /nix/store/bawgzrc0s9v8676jaam2hrhnmm9hg5cg-validate-spec.drv
+checking derivation packages.x86_64-linux.validate...
+derivation evaluated to /nix/store/bawgzrc0s9v8676jaam2hrhnmm9hg5cg-validate-spec.drv
+checking derivation packages.x86_64-linux.ci-requirements...
+derivation evaluated to /nix/store/bvggdnnpl028xq4h1klxbmizczz98clp-ci-requirements-export.drv
+checking derivation packages.x86_64-linux.verify-red-01-responsibility...
+derivation evaluated to /nix/store/7ag9l1by1pc7wrcb0798sxy3zxz0ppls-verify-red-01-responsibility.drv
+checking derivation packages.x86_64-linux.verify-red-02-consumer-api...
+derivation evaluated to /nix/store/syvgazaykqd2akziznydlf9g9ppk1h7f-verify-red-02-consumer-api.drv
+checking derivation packages.x86_64-linux.verify-red-03-outputs-manifest...
+derivation evaluated to /nix/store/4fhg6j8zj6ihl2wa7rva0bmgy2i5b82f-verify-red-03-outputs-manifest.drv
+checking derivation packages.x86_64-linux.verify-red-04-uniq...
+derivation evaluated to /nix/store/kkp501kp62w6mya9d0idg9aw91ad911v-verify-red-04-uniq.drv
+checking derivation packages.x86_64-linux.integration-verify-dod1...
+derivation evaluated to /nix/store/2xw3almm6c0pm8glnm7bnqg0byb8m36m-integration-verify-dod1.drv
+checking derivation packages.x86_64-linux.integration-negative-dod1...
+derivation evaluated to /nix/store/m8crqkb7mfz7acdfhkn7xyvybpn6ds0y-integration-negative-dod1.drv
+checking derivation packages.x86_64-linux.integration-verify-dod2...
+derivation evaluated to /nix/store/685pf8mpplbmvf530mywrsbaiydzx4hi-integration-verify-dod2.drv
+checking derivation packages.x86_64-linux.integration-negative-dod2...
+derivation evaluated to /nix/store/ca0q8jfwhchf6vj04xar9p6fjgx8zffs-integration-negative-dod2.drv
+checking derivation packages.x86_64-linux.integration-verify-dod3...
+derivation evaluated to /nix/store/z4zvpyj1lixflr9yykxfjnp91whpjybi-integration-verify-dod3.drv
+checking derivation packages.x86_64-linux.integration-negative-dod3...
+derivation evaluated to /nix/store/d34z5hhfz2rjs5zr39psq4hwl67q7742-integration-negative-dod3.drv
+checking derivation packages.x86_64-linux.integration-verify-dod4...
+derivation evaluated to /nix/store/vxcrw8vqkn6m6jmm1679ni3h4vihzdyp-integration-verify-dod4.drv
+checking derivation packages.x86_64-linux.integration-negative-dod4...
+derivation evaluated to /nix/store/lg5hr9bz5k62x790fydps4kjhdgrn8h6-integration-negative-dod4.drv
+checking flake output 'checksRed'...
+warning: unknown flake output 'checksRed'
+checking flake output 'spec'...
+warning: unknown flake output 'spec'
+running 39 flake checks...
+building '/nix/store/8ix3xasygdgc54v1f6h08x30qrlg9dqa-contract-srp-policy.drv'...
+building '/nix/store/m2q22qwjr1ba8pplza2zd8frgd08an13-feat-contract-aggregate.drv'...
+contract-srp-policy> === contract_srp_policy ===
+contract-srp-policy> Checking: /nix/store/q61gqf318lcfn08bim2rbqyqqj4wz83w-source/spec/urn/feat/dx-ux-test/contract.cue
+contract-srp-policy>   OK
+contract-srp-policy> Checking: /nix/store/q61gqf318lcfn08bim2rbqyqqj4wz83w-source/spec/urn/spec-repo/contract.cue
+contract-srp-policy>   OK
+contract-srp-policy> 
+contract-srp-policy> PASS: all contracts follow SRP policy
+building '/nix/store/bvggdnnpl028xq4h1klxbmizczz98clp-ci-requirements-export.drv'...
+feat-contract-aggregate> === feat_contract_aggregate ===
+feat-contract-aggregate> Validating: /nix/store/q61gqf318lcfn08bim2rbqyqqj4wz83w-source/spec/urn/feat/dx-ux-test/contract.cue
+feat-contract-aggregate>   OK
+feat-contract-aggregate> PASS: all feat contracts valid
+building '/nix/store/z6bvazmgyv1haf9j505fk8qa6rmb2p39-feat-decide-ci-score-matrix.drv'...
+ci-requirements-export> === CI Requirements Export ===
+ci-requirements-export> 
+ci-requirements-export> Extracted items: "dod0-factory-only","dod0-flake-srp","dod7-no-integration-duplication","dod8-patterns-ssot","feat-decide-ci-score-matrix","feat-spec","global-uniq-fixtures","integration-negative-dod1","integration-negative-dod2","integration-negative-dod3","integration-negative-dod4","integration-verify-dod1","integration-verify-dod2","integration-verify-dod3","integration-verify-dod4","policy-dev-scope","repo-cue-validity","spec-e2e","spec-fast","spec-slow","spec-smoke","spec-unit","test-dod5-positive","test-dod6-positive","unit-green-dod1","unit-green-dod2","unit-green-dod3","unit-green-dod4"
+ci-requirements-export> 
+ci-requirements-export> JSON content:
+ci-requirements-export> {
+ci-requirements-export>   "version": "1.0.0",
+ci-requirements-export>   "requiredChecks": ["dod0-factory-only","dod0-flake-srp","dod7-no-integration-duplication","dod8-patterns-ssot","feat-decide-ci-score-matrix","feat-spec","global-uniq-fixtures","integration-negative-dod1","integration-negative-dod2","integration-negative-dod3","integration-negative-dod4","integration-verify-dod1","integration-verify-dod2","integration-verify-dod3","integration-verify-dod4","policy-dev-scope","repo-cue-validity","spec-e2e","spec-fast","spec-slow","spec-smoke","spec-unit","test-dod5-positive","test-dod6-positive","unit-green-dod1","unit-green-dod2","unit-green-dod3","unit-green-dod4"],
+ci-requirements-export>   "generatedAt": "2026-01-03T05:04:07Z"
+ci-requirements-export> }
+ci-requirements-export> 
+ci-requirements-export> JSON is valid
+ci-requirements-export> 
+ci-requirements-export> SHA256: e5fa1315fad369d2a73bb272cc3e0ff420108a26fd2cb92cc496287e54ec3e1e
+ci-requirements-export> 
+ci-requirements-export> === Export Complete ===
+ci-requirements-export> total 16
+ci-requirements-export> drwxr-xr-x  2 nixbld nixbld 4096 Jan  3 05:04 .
+ci-requirements-export> drwxrwxr-t 45 nobody nixbld 4096 Jan  3 05:04 ..
+ci-requirements-export> -rw-r--r--  1 nixbld nixbld  675 Jan  3 05:04 ci-requirements.json
+ci-requirements-export> -rw-r--r--  1 nixbld nixbld   65 Jan  3 05:04 ci-requirements.sha256
+building '/nix/store/lvpsh2bc5xpvdx90prxza5ch12wms9ln-feat-dx-ux-test.drv'...
+feat-decide-ci-score-matrix> → Validating feat: decide-ci-score-matrix
+feat-decide-ci-score-matrix> ✅ feat-decide-ci-score-matrix PASS
+building '/nix/store/zn2dj1ag1930483f1d813qs7pbfvwmzj-ci-requirements-consistency.drv'...
+feat-dx-ux-test> → Validating feat: dx-ux-test
+feat-dx-ux-test> ✅ feat-dx-ux-test PASS
+building '/nix/store/6xmnybpmar81lji7y5a6z79f115m2hkg-feat-sandboxes-contract-aggregate.drv'...
+ci-requirements-consistency> === Phase 7.2: CI Requirements Consistency Check ===
+ci-requirements-consistency> Purpose: Verify ci-requirements.json matches contract.cue
+ci-requirements-consistency> 
+ci-requirements-consistency> Step 1: Extracting requiredChecks from contract.cue...
+ci-requirements-consistency>   Current contract.cue checks: dod0-factory-only,dod0-flake-srp,dod7-no-integration-duplication,dod8-patterns-ssot,feat-decide-ci-score-matrix,feat-spec,global-uniq-fixtures,integration-negative-dod1,integration-negative-dod2,integration-negative-dod3,integration-negative-dod4,integration-verify-dod1,integration-verify-dod2,integration-verify-dod3,integration-verify-dod4,policy-dev-scope,repo-cue-validity,spec-e2e,spec-fast,spec-slow,spec-smoke,spec-unit,test-dod5-positive,test-dod6-positive,unit-green-dod1,unit-green-dod2,unit-green-dod3,unit-green-dod4
+ci-requirements-consistency> 
+ci-requirements-consistency> Step 2: Reading requiredChecks from ci-requirements.json...
+ci-requirements-consistency>   Exported checks: dod0-factory-only,dod0-flake-srp,dod7-no-integration-duplication,dod8-patterns-ssot,feat-decide-ci-score-matrix,feat-spec,global-uniq-fixtures,integration-negative-dod1,integration-negative-dod2,integration-negative-dod3,integration-negative-dod4,integration-verify-dod1,integration-verify-dod2,integration-verify-dod3,integration-verify-dod4,policy-dev-scope,repo-cue-validity,spec-e2e,spec-fast,spec-slow,spec-smoke,spec-unit,test-dod5-positive,test-dod6-positive,unit-green-dod1,unit-green-dod2,unit-green-dod3,unit-green-dod4
+ci-requirements-consistency> 
+ci-requirements-consistency> Step 3: Comparing...
+ci-requirements-consistency>   CONSISTENT: ci-requirements.json matches contract.cue
+ci-requirements-consistency> 
+ci-requirements-consistency> Step 4: Validating ci-requirements.json...
+ci-requirements-consistency>   JSON is valid
+ci-requirements-consistency> 
+ci-requirements-consistency> Step 5: Verifying SHA256...
+ci-requirements-consistency>   SHA256 matches
+ci-requirements-consistency> 
+ci-requirements-consistency> === Phase 7.2: CONSISTENCY CHECK PASSED ===
+ci-requirements-consistency> ci-requirements-consistency: PASS
+building '/nix/store/0kmyzbrbm52r99c901x3kg180va9jvk0-feat-sandboxes-validity.drv'...
+feat-sandboxes-contract-aggregate> === feat_sandboxes_contract_aggregate ===
+feat-sandboxes-contract-aggregate> PASS: sandboxes directory empty (no contracts to validate)
+building '/nix/store/q1vzjr48xqdf9syhl1qkq30ickmg1w2d-feat-spec.drv'...
+feat-spec> → Validating feat: spec
+feat-spec> ✅ feat-spec PASS
+building '/nix/store/7fj99ja80dd1fkn4kaspz5ih7n4r9cac-global-uniq-fixtures.drv'...
+feat-sandboxes-validity> === Phase 8: feat-sandboxes-validity ===
+feat-sandboxes-validity> Purpose: Validate all contract.cue in spec/urn/feat/sandboxes/
+feat-sandboxes-validity> 
+feat-sandboxes-validity> PASS: no sandboxes to validate
+building '/nix/store/m8crqkb7mfz7acdfhkn7xyvybpn6ds0y-integration-negative-dod1.drv'...
+global-uniq-fixtures> 🔍 Global uniqueness check (fixtures)
+global-uniq-fixtures>   Checking: feat-dup-1
+global-uniq-fixtures>     CUE output: "urn:feat:duplicate-target"
+global-uniq-fixtures>     ✅ Extracted ID: urn:feat:duplicate-target
+global-uniq-fixtures>   Checking: feat-dup-2
+global-uniq-fixtures>     CUE output: "urn:feat:duplicate-target"
+global-uniq-fixtures>     ✅ Extracted ID: urn:feat:duplicate-target
+global-uniq-fixtures> 
+global-uniq-fixtures> All extracted IDs:
+global-uniq-fixtures> urn:feat:duplicate-target
+global-uniq-fixtures> urn:feat:duplicate-target
+global-uniq-fixtures> 
+global-uniq-fixtures> ✅ Duplicate IDs detected (as expected for FAIL fixture):
+global-uniq-fixtures> urn:feat:duplicate-target
+integration-negative-dod1> Running phase: unpackPhase
+building '/nix/store/ca0q8jfwhchf6vj04xar9p6fjgx8zffs-integration-negative-dod2.drv'...
+integration-negative-dod1> unpacking source archive /nix/store/q61gqf318lcfn08bim2rbqyqqj4wz83w-source
+integration-negative-dod1> source root is source
+integration-negative-dod1> Running phase: patchPhase
+integration-negative-dod1> Running phase: updateAutotoolsGnuConfigScriptsPhase
+integration-negative-dod1> Running phase: configurePhase
+integration-negative-dod2> Running phase: unpackPhase
+integration-negative-dod1> no configure script, doing nothing
+integration-negative-dod1> Running phase: buildPhase
+integration-negative-dod2> unpacking source archive /nix/store/q61gqf318lcfn08bim2rbqyqqj4wz83w-source
+integration-negative-dod2> source root is source
+integration-negative-dod1> Running phase: installPhase
+integration-negative-dod2> Running phase: patchPhase
+integration-negative-dod1> Running phase: fixupPhase
+integration-negative-dod2> Running phase: updateAutotoolsGnuConfigScriptsPhase
+integration-negative-dod2> Running phase: configurePhase
+integration-negative-dod1> shrinking RPATHs of ELF executables and libraries in /nix/store/yypkpnwh03rfg57hc0lxsj6z68jh6mw4-integration-negative-dod1
+integration-negative-dod1> checking for references to /build/ in /nix/store/yypkpnwh03rfg57hc0lxsj6z68jh6mw4-integration-negative-dod1...
+integration-negative-dod2> no configure script, doing nothing
+integration-negative-dod1> patching script interpreter paths in /nix/store/yypkpnwh03rfg57hc0lxsj6z68jh6mw4-integration-negative-dod1
+integration-negative-dod2> Running phase: buildPhase
+building '/nix/store/d34z5hhfz2rjs5zr39psq4hwl67q7742-integration-negative-dod3.drv'...
+integration-negative-dod2> Running phase: installPhase
+integration-negative-dod2> Running phase: fixupPhase
+integration-negative-dod2> shrinking RPATHs of ELF executables and libraries in /nix/store/azyr109c2i9iw05j090ks3f3mfllayxh-integration-negative-dod2
+integration-negative-dod2> checking for references to /build/ in /nix/store/azyr109c2i9iw05j090ks3f3mfllayxh-integration-negative-dod2...
+integration-negative-dod2> patching script interpreter paths in /nix/store/azyr109c2i9iw05j090ks3f3mfllayxh-integration-negative-dod2
+building '/nix/store/lg5hr9bz5k62x790fydps4kjhdgrn8h6-integration-negative-dod4.drv'...
+integration-negative-dod3> Running phase: unpackPhase
+integration-negative-dod3> unpacking source archive /nix/store/q61gqf318lcfn08bim2rbqyqqj4wz83w-source
+integration-negative-dod3> source root is source
+integration-negative-dod3> Running phase: patchPhase
+integration-negative-dod3> Running phase: updateAutotoolsGnuConfigScriptsPhase
+integration-negative-dod3> Running phase: configurePhase
+integration-negative-dod3> no configure script, doing nothing
+integration-negative-dod3> Running phase: buildPhase
+integration-negative-dod3> Running phase: installPhase
+integration-negative-dod3> Running phase: fixupPhase
+integration-negative-dod3> shrinking RPATHs of ELF executables and libraries in /nix/store/y0qapry5fbffk4zmpl05ycgnql63a5gq-integration-negative-dod3
+integration-negative-dod3> checking for references to /build/ in /nix/store/y0qapry5fbffk4zmpl05ycgnql63a5gq-integration-negative-dod3...
+integration-negative-dod3> patching script interpreter paths in /nix/store/y0qapry5fbffk4zmpl05ycgnql63a5gq-integration-negative-dod3
+building '/nix/store/2xw3almm6c0pm8glnm7bnqg0byb8m36m-integration-verify-dod1.drv'...
+integration-negative-dod4> Running phase: unpackPhase
+integration-negative-dod4> unpacking source archive /nix/store/q61gqf318lcfn08bim2rbqyqqj4wz83w-source
+integration-negative-dod4> source root is source
+integration-negative-dod4> Running phase: patchPhase
+integration-negative-dod4> Running phase: updateAutotoolsGnuConfigScriptsPhase
+integration-negative-dod4> Running phase: configurePhase
+integration-negative-dod4> no configure script, doing nothing
+integration-negative-dod4> Running phase: buildPhase
+integration-verify-dod1> Running phase: unpackPhase
+integration-negative-dod4> ✅ Integration Negative: DoD4 (悪性検出)
+integration-verify-dod1> unpacking source archive /nix/store/q61gqf318lcfn08bim2rbqyqqj4wz83w-source
+integration-verify-dod1> source root is source
+integration-verify-dod1> Running phase: patchPhase
+integration-negative-dod4> Running phase: installPhase
+integration-verify-dod1> Running phase: updateAutotoolsGnuConfigScriptsPhase
+integration-negative-dod4> Running phase: fixupPhase
+integration-negative-dod4> shrinking RPATHs of ELF executables and libraries in /nix/store/rszl4slgbdppg5zlil7zhgrb9n64c8rf-integration-negative-dod4
+integration-verify-dod1> Running phase: configurePhase
+integration-negative-dod4> checking for references to /build/ in /nix/store/rszl4slgbdppg5zlil7zhgrb9n64c8rf-integration-negative-dod4...
+integration-negative-dod4> patching script interpreter paths in /nix/store/rszl4slgbdppg5zlil7zhgrb9n64c8rf-integration-negative-dod4
+integration-verify-dod1> no configure script, doing nothing
+integration-verify-dod1> Running phase: buildPhase
+building '/nix/store/685pf8mpplbmvf530mywrsbaiydzx4hi-integration-verify-dod2.drv'...
+integration-verify-dod1> Running phase: installPhase
+integration-verify-dod1> Running phase: fixupPhase
+integration-verify-dod1> shrinking RPATHs of ELF executables and libraries in /nix/store/i7izwmqhyw1z5f7rzmlwlvga4pfljp11-integration-verify-dod1
+integration-verify-dod1> checking for references to /build/ in /nix/store/i7izwmqhyw1z5f7rzmlwlvga4pfljp11-integration-verify-dod1...
+integration-verify-dod1> patching script interpreter paths in /nix/store/i7izwmqhyw1z5f7rzmlwlvga4pfljp11-integration-verify-dod1
+building '/nix/store/z4zvpyj1lixflr9yykxfjnp91whpjybi-integration-verify-dod3.drv'...
+integration-verify-dod2> Running phase: unpackPhase
+integration-verify-dod2> unpacking source archive /nix/store/q61gqf318lcfn08bim2rbqyqqj4wz83w-source
+integration-verify-dod2> source root is source
+integration-verify-dod2> Running phase: patchPhase
+integration-verify-dod2> Running phase: updateAutotoolsGnuConfigScriptsPhase
+integration-verify-dod2> Running phase: configurePhase
+integration-verify-dod2> no configure script, doing nothing
+integration-verify-dod2> Running phase: buildPhase
+integration-verify-dod3> Running phase: unpackPhase
+integration-verify-dod3> unpacking source archive /nix/store/q61gqf318lcfn08bim2rbqyqqj4wz83w-source
+integration-verify-dod3> source root is source
+integration-verify-dod2> Running phase: installPhase
+integration-verify-dod3> Running phase: patchPhase
+integration-verify-dod2> Running phase: fixupPhase
+integration-verify-dod3> Running phase: updateAutotoolsGnuConfigScriptsPhase
+integration-verify-dod2> shrinking RPATHs of ELF executables and libraries in /nix/store/iykkymkm312vlk3r2q0xy4nk2yidl14l-integration-verify-dod2
+integration-verify-dod3> Running phase: configurePhase
+integration-verify-dod2> checking for references to /build/ in /nix/store/iykkymkm312vlk3r2q0xy4nk2yidl14l-integration-verify-dod2...
+integration-verify-dod2> patching script interpreter paths in /nix/store/iykkymkm312vlk3r2q0xy4nk2yidl14l-integration-verify-dod2
+integration-verify-dod3> no configure script, doing nothing
+integration-verify-dod3> Running phase: buildPhase
+building '/nix/store/vxcrw8vqkn6m6jmm1679ni3h4vihzdyp-integration-verify-dod4.drv'...
+integration-verify-dod3> Running phase: installPhase
+integration-verify-dod3> Running phase: fixupPhase
+integration-verify-dod3> shrinking RPATHs of ELF executables and libraries in /nix/store/5g9giimvha1n18g2s0v0iag2h2rq2qa1-integration-verify-dod3
+integration-verify-dod3> checking for references to /build/ in /nix/store/5g9giimvha1n18g2s0v0iag2h2rq2qa1-integration-verify-dod3...
+integration-verify-dod3> patching script interpreter paths in /nix/store/5g9giimvha1n18g2s0v0iag2h2rq2qa1-integration-verify-dod3
+building '/nix/store/3nskv2q8imhy2a1mfh0hkch9kwa3jnii-policy-dev-scope.drv'...
+integration-verify-dod4> Running phase: unpackPhase
+integration-verify-dod4> unpacking source archive /nix/store/q61gqf318lcfn08bim2rbqyqqj4wz83w-source
+integration-verify-dod4> source root is source
+integration-verify-dod4> Running phase: patchPhase
+policy-dev-scope> 🔍 dev branch scope policy check
+policy-dev-scope> ⚠️  main branch not found, skipping policy check
+integration-verify-dod4> Running phase: updateAutotoolsGnuConfigScriptsPhase
+building '/nix/store/xnkp5xqm733k5qpysj7c12j61bgfklhq-repo-cue-validity.drv'...
+integration-verify-dod4> Running phase: configurePhase
+integration-verify-dod4> no configure script, doing nothing
+integration-verify-dod4> Running phase: buildPhase
+integration-verify-dod4> ✅ Integration Verify: DoD4 (実データクリーン)
+integration-verify-dod4> Running phase: installPhase
+integration-verify-dod4> Running phase: fixupPhase
+repo-cue-validity> 🔍 repo-cue-validity check
+repo-cue-validity> 
+repo-cue-validity> NOTE: This check is deprecated. Use spec-repo-contract-validity instead.
+repo-cue-validity> 
+repo-cue-validity> → Checking spec/urn/spec-repo/contract.cue exists and evaluates...
+integration-verify-dod4> shrinking RPATHs of ELF executables and libraries in /nix/store/7bl0x32pqbjw7i1973lvc95q3dpxn46m-integration-verify-dod4
+repo-cue-validity> ✅ contract.cue exists and is valid
+repo-cue-validity> 
+repo-cue-validity> → Extracting requiredChecks...
+integration-verify-dod4> checking for references to /build/ in /nix/store/7bl0x32pqbjw7i1973lvc95q3dpxn46m-integration-verify-dod4...
+repo-cue-validity> Found 28 required checks
+repo-cue-validity> 
+repo-cue-validity> → Checking for duplicates in requiredChecks...
+integration-verify-dod4> patching script interpreter paths in /nix/store/7bl0x32pqbjw7i1973lvc95q3dpxn46m-integration-verify-dod4
+repo-cue-validity> ✅ No duplicates found
+repo-cue-validity> 
+repo-cue-validity> → Getting flake checks names...
+building '/nix/store/zqwi2cky671l5kl8lb78g395rvjg260n-spec-fast.drv'...
+repo-cue-validity> Found 39 flake checks
+repo-cue-validity> 
+repo-cue-validity> → Verifying requiredChecks are in flake checks...
+repo-cue-validity> ✅ All required checks found in flake
+repo-cue-validity> 
+repo-cue-validity> → Checking deliverablesRefs paths...
+repo-cue-validity> ✅ All deliverablesRefs exist
+repo-cue-validity> 
+repo-cue-validity> → Checking requiredChecks stability...
+repo-cue-validity> ⚠️  WARNING: requiredChecks hash changed
+repo-cue-validity>   Current:  4d7f0123f7a12640ec017e5773d468765644ebb3bf2d375e7fedd3c1f2cec476
+repo-cue-validity>   Expected: 1e841880918c181f84034b1cfde17e44e575eea937ef899891312f6fac6b436d
+repo-cue-validity>   This is expected if intentional changes were made.
+repo-cue-validity>   Update EXPECTED_HASH in repo-cue-validity.nix if this change is intended.
+repo-cue-validity> 
+repo-cue-validity> ✅ repo-cue-validity PASS (deprecated - use spec-repo-contract-validity)
+building '/nix/store/4p08wnm19vpyy3sm91qlad2y9hn92mcb-spec-repo-contract-validity.drv'...
+spec-fast> 🏃 Phase 1: fast checks (aggregated)
+spec-fast> 
+spec-fast> ✅ All feat validations completed (3 feats)
+spec-fast> 
+spec-fast> → Validating other spec areas...
+spec-fast> ✅ Other spec areas PASS
+spec-fast> 
+spec-fast> → Validating PASS fixtures (expect success)...
+spec-fast> ✅ PASS fixtures validated
+spec-fast> 
+spec-fast> → Validating FAIL fixtures (expect failures)...
+spec-fast>   Skipping: duplicate-feat-id (cross-feat check, tested by global-uniq-fixtures)
+spec-fast>   Testing: duplicate-id
+spec-fast> feature.slug: conflicting values "duplicate-b" and "duplicate-a":
+spec-fast>     ./spec/ci/fixtures/fail/duplicate-id/feat-a.cue:9:8
+spec-fast>     ./spec/ci/fixtures/fail/duplicate-id/feat-b.cue:9:8
+spec-fast> feature.slug: invalid interpolation: conflicting values "duplicate-b" and "duplicate-a":
+spec-fast>     ./spec/schema/feature.cue:13:6
+spec-fast>     ./spec/ci/fixtures/fail/duplicate-id/feat-a.cue:9:8
+spec-fast>     ./spec/ci/fixtures/fail/duplicate-id/feat-b.cue:9:8
+spec-fast>     ✅ Failed as expected
+spec-fast> 
+spec-fast>   Testing: invalid-slug
+spec-fast> feat_bad.slug: invalid value "Bad_Slug" (out of bound =~"^[a-z0-9]+(-[a-z0-9]+)*$"):
+spec-fast>     ./spec/schema/feature.cue:10:8
+spec-fast>     ./spec/ci/fixtures/fail/invalid-slug/feat-bad.cue:9:8
+spec-fast>     ./spec/schema/feature.cue:9:8
+spec-fast> feat_bad.slug: invalid interpolation: invalid value "Bad_Slug" (out of bound =~"^[a-z0-9]+(-[a-z0-9]+)*$"):
+spec-fast>     ./spec/schema/feature.cue:13:6
+spec-fast>     ./spec/ci/fixtures/fail/invalid-slug/feat-bad.cue:9:8
+spec-fast>     ./spec/schema/feature.cue:9:8
+spec-fast>     ./spec/schema/feature.cue:10:8
+spec-fast>     ✅ Failed as expected
+spec-fast> 
+spec-fast> ✅ All 2 FAIL fixtures failed as expected
+spec-fast> 
+spec-fast> ✅ fast PASS (spec + fixtures verified)
+building '/nix/store/92p185c3zyrlms5zmf6s19j5hx1n4d0i-spec-slow.drv'...
+spec-repo-contract-validity> === spec_repo_contract_validity ===
+spec-repo-contract-validity> requiredChecks: ["dod0-factory-only", "dod0-flake-srp", "dod7-no-integration-duplication", "dod8-patterns-ssot", "spec-e2e", "spec-fast", "spec-slow", "spec-smoke", "spec-unit", "feat-decide-ci-score-matrix", "feat-spec", "unit-green-dod1", "unit-green-dod2", "unit-green-dod3", "unit-green-dod4", "integration-negative-dod1", "integration-negative-dod2", "integration-negative-dod3", "integration-negative-dod4", "integration-verify-dod1", "integration-verify-dod2", "integration-verify-dod3", "integration-verify-dod4", "global-uniq-fixtures", "policy-dev-scope", "test-dod5-positive", "test-dod6-positive", "repo-cue-validity"]
+spec-repo-contract-validity> deliverablesRefs: ["spec/ci/contract", "spec/ci/detector", "spec/ci/tdd", "spec/ci/fixtures", "spec/ci/checks", "spec/urn", "spec/schema", "spec/adapter", "spec/mapping", "spec/external"]
+spec-repo-contract-validity> PASS: contract.cue is valid CUE
+building '/nix/store/a9anzgirdwdic71i431ki3scrzxxb2sq-spec-smoke.drv'...
+spec-slow> 🐢 Phase 1: slow checks
+spec-slow> ✅ slow PASS (contract constraints verified)
+building '/nix/store/nmxybigl3gpv17l48qh79l73sn3wfgxq-unit-green-dod1.drv'...
+unit-green-dod1> ✅ Unit GREEN: DoD1 (責務配分3カテゴリ)
+building '/nix/store/f7wwjy1cmv9wp2hknhf2vvpph6r1bh1i-unit-green-dod2.drv'...
+spec-smoke> 🔍 Phase 0: smoke checks
+spec-smoke> ✅ smoke PASS (contract constraints verified)
+building '/nix/store/l7xn940ka7h55ybak7i66xh5x42gw01a-unit-green-dod3.drv'...
+unit-green-dod2> ✅ Unit GREEN: DoD2 (consumer API)
+building '/nix/store/8cg5cndy1nd26q1f5dqmz3x90m3b8qiw-unit-green-dod4.drv'...
+unit-green-dod3> ✅ Unit GREEN: DoD3 (outputs manifest)
+unit-green-dod4> ✅ Unit GREEN: DoD4 (重複なし)
+warning: The check omitted these incompatible systems: aarch64-darwin, aarch64-linux, x86_64-darwin
+Use '--all-systems' to check all.
