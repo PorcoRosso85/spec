@@ -20,27 +20,30 @@ pkgs.runCommand "repo-cue-validity"
 
     echo "🔍 repo-cue-validity check"
     echo ""
-
-    # 1. repo.cue exists and is valid CUE
-    echo "→ Checking repo.cue exists and evaluates..."
-    if [ ! -f "./repo.cue" ]; then
-      echo "❌ FAIL: repo.cue not found"
-      exit 1
-    fi
-
-    ${cue}/bin/cue eval ./repo.cue > /dev/null 2>&1
-    if [ $? -ne 0 ]; then
-      echo "❌ FAIL: repo.cue is not valid CUE"
-      exit 1
-    fi
-    echo "✅ repo.cue exists and is valid"
+    echo "NOTE: This check is deprecated. Use spec-repo-contract-validity instead."
     echo ""
 
-    # 2. Extract requiredChecks from repo.cue
+    # 1. contract.cue exists and is valid CUE
+    echo "→ Checking spec/urn/spec-repo/contract.cue exists and evaluates..."
+    CONTRACT_CUE="./spec/urn/spec-repo/contract.cue"
+    if [ ! -f "$CONTRACT_CUE" ]; then
+      echo "❌ FAIL: contract.cue not found"
+      exit 1
+    fi
+
+    ${cue}/bin/cue eval "$CONTRACT_CUE" > /dev/null 2>&1
+    if [ $? -ne 0 ]; then
+      echo "❌ FAIL: contract.cue is not valid CUE"
+      exit 1
+    fi
+    echo "✅ contract.cue exists and is valid"
+    echo ""
+
+    # 2. Extract requiredChecks from contract.cue
     echo "→ Extracting requiredChecks..."
-    REQUIRED_CHECKS=$(${cue}/bin/cue export ./repo.cue -e 'repo.requiredChecks' --out json 2>/dev/null | jq -r '.[]' 2>/dev/null || echo "")
+    REQUIRED_CHECKS=$(${cue}/bin/cue export "$CONTRACT_CUE" -e 'requiredChecks' --out json 2>/dev/null | jq -r '.[]' 2>/dev/null || echo "")
     if [ -z "$REQUIRED_CHECKS" ]; then
-      echo "❌ FAIL: repo.requiredChecks not found or empty"
+      echo "❌ FAIL: requiredChecks not found or empty"
       exit 1
     fi
 
@@ -90,7 +93,7 @@ pkgs.runCommand "repo-cue-validity"
 
     # 6. Check deliverablesRefs paths exist
     echo "→ Checking deliverablesRefs paths..."
-    DELIVERABLES_REFS=$(${cue}/bin/cue export ./repo.cue -e 'repo.deliverablesRefs' --out json 2>/dev/null | jq -r '.[]' 2>/dev/null || echo "")
+    DELIVERABLES_REFS=$(${cue}/bin/cue export "$CONTRACT_CUE" -e 'deliverablesRefs' --out json 2>/dev/null | jq -r '.[]' 2>/dev/null || echo "")
 
     if [ -n "$DELIVERABLES_REFS" ]; then
       BROKEN=""
@@ -113,7 +116,7 @@ pkgs.runCommand "repo-cue-validity"
     # Phase 6.9: requiredChecks 差分検知
     echo "→ Checking requiredChecks stability..."
     CURRENT_HASH=$(echo "$REQUIRED_CHECKS" | sort | tr '\n' ' ' | sha256sum | cut -d' ' -f1)
-    # Expected hash for Phase 6 (b7ab953): 1e841880918c181f84034b1cfde17e44e575eea937ef899891312f6fac6b436d
+    # Expected hash for Phase 9 (contract.cue migration): NEW_HASH
     EXPECTED_HASH="1e841880918c181f84034b1cfde17e44e575eea937ef899891312f6fac6b436d"
     if [ "$CURRENT_HASH" != "$EXPECTED_HASH" ]; then
       echo "⚠️  WARNING: requiredChecks hash changed"
@@ -126,6 +129,6 @@ pkgs.runCommand "repo-cue-validity"
     fi
     echo ""
 
-    echo "✅ repo-cue-validity PASS"
+    echo "✅ repo-cue-validity PASS (deprecated - use spec-repo-contract-validity)"
     mkdir -p $out && echo "ok" > $out/result
   ''
