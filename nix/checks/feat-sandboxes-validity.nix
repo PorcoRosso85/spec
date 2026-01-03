@@ -9,35 +9,10 @@ let
   sandboxesRoot = self + "/spec/urn/feat/sandboxes";
   repo-cue-extract = import ../lib/repo-cue-extract.nix { inherit pkgs; };
   extractBin = repo-cue-extract.extractRequiredChecksBin;
-
-  sandboxes = pkgs.stdenv.mkDerivation {
-    name = "sandboxes-list";
-    dontUnpack = true;
-    dontBuild = true;
-    outputHashMode = "flat";
-
-    passAsFile = {
-      list =
-        if pkgs.lib.pathExists sandboxesRoot then
-          pkgs.lib.concatStringsSep "\n" (
-            pkgs.lib.filter (f: f != "" && f != "default.nix" && f != "default.nix.nix") (
-              pkgs.lib.attrNames (builtins.readDir sandboxesRoot)
-            )
-          )
-        else
-          "";
-    };
-
-    installPhase = ''
-      mkdir -p $out
-      echo "$list" > $out/list
-    '';
-  };
 in
 pkgs.runCommand "feat-sandboxes-validity"
   {
     buildInputs = [ pkgs.coreutils ];
-    sandboxesList = sandboxes.list;
   }
   ''
     set -euo pipefail
@@ -46,7 +21,13 @@ pkgs.runCommand "feat-sandboxes-validity"
     echo "Purpose: Validate all repo.cue in spec/urn/feat/sandboxes/"
     echo ""
 
-    SLUGS=$(cat "$sandboxesList")
+    if [ ! -d "${sandboxesRoot}" ]; then
+      echo "PASS: no sandboxes to validate"
+      echo "feat-sandboxes-validity: PASS (empty)" > "$out"
+      exit 0
+    fi
+
+    SLUGS=$(ls -1 "${sandboxesRoot}" 2>/dev/null | grep -v '^default\.nix$' | grep -v '^default\.nix\.nix$' || true)
     if [ -z "$SLUGS" ]; then
       echo "PASS: no sandboxes to validate"
       echo "feat-sandboxes-validity: PASS (empty)" > "$out"
