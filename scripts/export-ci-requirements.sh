@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-REPO_CUE="${1:-./repo.cue}"
+CONTRACT_CUE="${1:-./spec/urn/spec-repo/contract.cue}"
 OUTPUT_DIR="${2:-.}"
 
 mkdir -p "$OUTPUT_DIR"
@@ -10,7 +10,7 @@ echo "=== CI Requirements Export ==="
 echo ""
 
 ITEMS=$(
-	sed -n "/requiredChecks:/,/^[[:space:]]*\]/p" "$REPO_CUE" |
+	sed -n "/requiredChecks:/,/^[[:space:]]*\]/p" "$CONTRACT_CUE" |
 		sed 's,//.*$,,' |
 		grep -oE '"[^"]+"' |
 		tr -d '"' |

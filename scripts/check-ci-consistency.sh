@@ -1,17 +1,17 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-REPO_CUE="${1:-./repo.cue}"
+CONTRACT_CUE="${1:-./spec/urn/spec-repo/contract.cue}"
 CI_JSON="${2:-./ci-requirements.json}"
 CI_SHA256="${3:-./ci-requirements.sha256}"
 
 echo "=== Phase 7.2: CI Requirements Consistency Check ==="
-echo "Purpose: Verify ci-requirements.json matches repo.cue"
+echo "Purpose: Verify ci-requirements.json matches contract.cue"
 echo ""
 
-echo "Step 1: Extracting requiredChecks from repo.cue..."
+echo "Step 1: Extracting requiredChecks from contract.cue..."
 CURRENT_CHECKS=$(
-	sed -n "/requiredChecks:/,/^[[:space:]]*\]/p" "$REPO_CUE" |
+	sed -n "/requiredChecks:/,/^[[:space:]]*\]/p" "$CONTRACT_CUE" |
 		sed 's,//.*$,,' |
 		grep -oE '"[^"]+"' |
 		tr -d '"' |
@@ -19,7 +19,7 @@ CURRENT_CHECKS=$(
 		tr '\n' ',' |
 		sed 's/,$//'
 )
-echo "  Current repo.cue checks: $CURRENT_CHECKS"
+echo "  Current contract.cue checks: $CURRENT_CHECKS"
 echo ""
 
 echo "Step 2: Reading requiredChecks from ci-requirements.json..."
@@ -37,9 +37,9 @@ echo ""
 
 echo "Step 3: Comparing..."
 if [ "$CURRENT_CHECKS" = "$EXPORTED_CHECKS" ]; then
-	echo "  CONSISTENT: ci-requirements.json matches repo.cue"
+	echo "  CONSISTENT: ci-requirements.json matches contract.cue"
 else
-	echo "  INCONSISTENT: ci-requirements.json does not match repo.cue"
+	echo "  INCONSISTENT: ci-requirements.json does not match contract.cue"
 	echo ""
 	echo "  Missing in ci-requirements.json:"
 	comm -23 <(echo "$CURRENT_CHECKS" | tr ',' '\n' | sort) <(echo "$EXPORTED_CHECKS" | tr ',' '\n' | sort) | sed 's/^/    - /'

@@ -134,7 +134,7 @@
               ];
             }
             ''
-              ${pkgs.bash}/bin/bash ${./scripts/export-ci-requirements.sh} ${./repo.cue} $out
+              ${pkgs.bash}/bin/bash ${./scripts/export-ci-requirements.sh} ${self}/spec/urn/spec-repo/contract.cue $out
             '';
 
         # TDD-RED verification (expected to FAIL when built)
@@ -282,7 +282,7 @@
               }
               ''
                 cp -r $ciReq ci-requirements
-                ${pkgs.bash}/bin/bash ${./scripts/check-ci-consistency.sh} ${./repo.cue} \
+                ${pkgs.bash}/bin/bash ${./scripts/check-ci-consistency.sh} ${self}/spec/urn/spec-repo/contract.cue \
                   ci-requirements/ci-requirements.json ci-requirements/ci-requirements.sha256
                 touch $out
               '';
@@ -291,6 +291,24 @@
           feat-sandboxes-validity = import ./nix/checks/feat-sandboxes-validity.nix {
             inherit pkgs self;
             cue = cue-v15;
+          };
+
+          # Phase 9: repo.cue abolition - contract.cue unified
+          no-repo-cue-tracked = import ./nix/checks/no-repo-cue-tracked.nix { inherit pkgs; };
+          no-repo-cue-any = import ./nix/checks/no-repo-cue-any.nix { inherit pkgs; };
+          no-repo-cue-reference-in-code = import ./nix/checks/no-repo-cue-reference-in-code.nix {
+            inherit pkgs self;
+          };
+          spec-repo-contract-validity = import ./nix/checks/spec-repo-contract-validity.nix {
+            inherit pkgs self;
+            cue = cue-v15;
+          };
+          feat-sandboxes-contract-aggregate = import ./nix/checks/feat-sandboxes-contract-aggregate.nix {
+            inherit pkgs self;
+            cue = cue-v15;
+          };
+          contract-srp-policy = import ./nix/checks/contract-srp-policy.nix {
+            inherit pkgs self;
           };
         };
 
