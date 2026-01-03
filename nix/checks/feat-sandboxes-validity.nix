@@ -7,7 +7,7 @@
 { pkgs, self }:
 let
   sandboxesRoot = self + "/spec/urn/feat/sandboxes";
-  repo-cue-extract = import ./nix/lib/repo-cue-extract.nix { inherit pkgs; };
+  repo-cue-extract = import ../lib/repo-cue-extract.nix { inherit pkgs; };
   extractBin = repo-cue-extract.extractRequiredChecksBin;
 
   sandboxes = pkgs.stdenv.mkDerivation {
