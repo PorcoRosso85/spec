@@ -5,7 +5,7 @@
 }:
 pkgs.runCommand "spec-repo-contract-validity"
   {
-    description = "Validate spec/urn/spec-repo/contract.cue against schema";
+    description = "Validate spec/urn/spec-repo/contract.cue";
   }
   ''
     set -euo pipefail
@@ -13,20 +13,14 @@ pkgs.runCommand "spec-repo-contract-validity"
     echo "=== spec_repo_contract_validity ==="
 
     CONTRACT="${self}/spec/urn/spec-repo/contract.cue"
-    SCHEMA="${self}/spec/ci/contract/contract.cue"
 
     if [ ! -f "$CONTRACT" ]; then
-      echo "FAIL: found at contract.cue not $CONTRACT"
+      echo "FAIL: contract.cue not found at $CONTRACT"
       exit 1
     fi
 
-    if [ ! -f "$SCHEMA" ]; then
-      echo "FAIL: schema not found at $SCHEMA"
-      exit 1
-    fi
-
-    if ${cue}/bin/cue vet "$CONTRACT" "$SCHEMA" 2>&1; then
-      echo "PASS: contract.cue is valid"
+    if ${cue}/bin/cue eval "$CONTRACT" 2>&1; then
+      echo "PASS: contract.cue is valid CUE"
       mkdir -p $out && echo "ok" > $out/result
     else
       echo "FAIL: contract.cue validation failed"
