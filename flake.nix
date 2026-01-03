@@ -286,6 +286,11 @@
                   ci-requirements/ci-requirements.json ci-requirements/ci-requirements.sha256
                 touch $out
               '';
+
+          # Phase 8: feat-sandboxes-validity
+          feat-sandboxes-validity = import ./nix/checks/feat-sandboxes-validity.nix {
+            inherit pkgs self;
+          };
         };
 
         # RED-phase checks: Expected to FAIL during RED, PASS during GREEN
