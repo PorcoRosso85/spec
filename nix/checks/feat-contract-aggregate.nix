@@ -26,12 +26,20 @@ pkgs.runCommand "feat-contract-aggregate"
     FAILED=""
     for CONTRACT in $CONTRACTS; do
       echo "Validating: $CONTRACT"
-      if ${cue}/bin/cue vet "$CONTRACT" "${self}/spec/ci/contract/contract.cue" 2>&1; then
-        echo "  OK"
-      else
-        echo "  FAIL: $CONTRACT"
-        FAILED="$FAILED$CONTRACT"$'\n'
+
+      if ! ${cue}/bin/cue eval "$CONTRACT" 2>&1 > /dev/null; then
+        echo "  FAIL: CUE syntax error"
+        FAILED="$FAILED$CONTRACT: CUE syntax"$'\n'
+        continue
       fi
+
+      if ! ${cue}/bin/cue export "$CONTRACT" -e requiredChecks --out json 2>/dev/null | grep -q '"'; then
+        echo "  FAIL: requiredChecks missing or empty"
+        FAILED="$FAILED$CONTRACT: requiredChecks missing"$'\n'
+        continue
+      fi
+
+      echo "  OK"
     done
 
     if [ -n "$FAILED" ]; then

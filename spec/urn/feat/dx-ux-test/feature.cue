@@ -1,4 +1,4 @@
-package feat_dx_ux_test
+package dx_ux_test
 
 feature: {
   id: "urn:feat:dx-ux-test"
