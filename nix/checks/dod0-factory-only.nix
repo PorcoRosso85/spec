@@ -33,6 +33,7 @@ let
       # Phase 2: repo-cue-validity もFactoryパターンを使うため例外追加
       # Phase 6: repo-cue-format-independence (runCommandテスト) も例外追加
       # Phase 8: feat-sandboxes-validity (simple validation script) も例外追加
+      # Phase 9: repo.cue abolition tests (contract validation tests) も例外追加
       dodExceptions = [
         "dod0-factory-only.nix"
         "dod0-flake-srp.nix"
@@ -41,6 +42,12 @@ let
         "repo-cue-validity.nix"
         "repo-cue-format-independence.nix"
         "feat-sandboxes-validity.nix"
+        "no-repo-cue-tracked.nix"
+        "no-repo-cue-any.nix"
+        "no-repo-cue-reference-in-code.nix"
+        "spec-repo-contract-validity.nix"
+        "feat-sandboxes-contract-aggregate.nix"
+        "contract-srp-policy.nix"
       ];
 
       hasDirectDerivation = builtins.any (p: hasInfix p content) patterns;
